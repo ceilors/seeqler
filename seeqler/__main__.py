@@ -14,22 +14,6 @@ tag_limit = 'select_limit'
 id_window = 'main_window'
 
 
-# TODO: rewrite
-def parse_sql_scheme(sql):
-    data = re.search(r'\((.*)\)', sql)
-    return [x.strip().split() for x in data.group(1).split(',')]
-
-
-# TODO: rewrite
-def get_table_schema(engine_name, table_name, conn):
-    if engine_name == 'sqlite':
-        sql = conn.execute(f"select sql from sqlite_master where name = '{table_name}'").one()
-        if not sql:
-            return [('none', 'none')]
-        return parse_sql_scheme(sql[0])
-    return [('none', 'unsupported')]
-
-
 def main(connection_string: str):
     engine = sa.create_engine(connection_string)
     inspector = sa.inspect(engine)
@@ -61,10 +45,10 @@ def main(connection_string: str):
                     for e in row:
                         dpg.add_text(e)
 
-            for item in get_table_schema(engine.name, table, conn):
+            for item in columns:
                 with dpg.table_row(parent=tag_schema):
-                    for row in item:
-                        dpg.add_text(row)
+                    dpg.add_text(item['name'])
+                    dpg.add_text(item['type'])
 
 
     def combo_callback(sender, value):
