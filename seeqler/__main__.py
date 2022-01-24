@@ -64,10 +64,12 @@ class Seeqler:
         dpg.create_context()
 
         with dpg.font_registry():
-            default_font = dpg.add_font(Path(__file__).parent.parent / 'resources'/ 'FiraMono-Regular.ttf', 16)
+            with dpg.font(Path(__file__).parent.parent / 'resources'/ 'FiraMono-Regular.ttf', 16, tag='default font') as default_font:
+                dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
+                dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
 
         with dpg.window(label='Window', id=self.id_window):
-            dpg.bind_font(default_font)
+            dpg.bind_font('default font')
 
             with dpg.group(horizontal=True):
                 with dpg.group(width=200):
