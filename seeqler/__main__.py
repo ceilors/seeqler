@@ -5,6 +5,8 @@ import re
 import sqlalchemy as sa
 import dearpygui.dearpygui as dpg
 
+from .ui_windows import create_connection_list_window, create_connection_schema_window
+
 
 class Seeqler:
     tag_schema_selector = 'schema selector'
@@ -14,14 +16,21 @@ class Seeqler:
     tag_handler = 'table list handler'
     tag_limit = 'select_limit'
     id_window = 'main_window'
+    id_list_window = 'connection_list'
+    # fmt: off
     table_params = {
         'header_row': True, 'borders_outerH': True, 'borders_innerV': True, 'borders_innerH': True,
         'borders_outerV': True, 'resizable': True, 'no_host_extendX': True
     }
+    # fmt: on
 
-    def __init__(self, connection_string: str) -> 'Seeqler':
+    def init(self, connection_string: str):
         self.engine = sa.create_engine(connection_string)
         self.inspector = sa.inspect(self.engine)
+
+    def __init__(self, connection_string: str | None):
+        if connection_string:
+            self.init(connection_string)
 
     def ui_select_table(self, sender, table=None):
         dpg.delete_item(self.tag_content, children_only=True)
@@ -30,6 +39,9 @@ class Seeqler:
         schema = dpg.get_value(self.tag_schema_selector)
         table = table or dpg.get_value(self.tag_listbox)
         limit = dpg.get_value(self.tag_limit)
+
+        if not table:
+            return
 
         columns = self.inspector.get_columns(table, schema=schema)
         for c in columns:
@@ -57,35 +69,25 @@ class Seeqler:
 
     def ui_select_schema(self, sender, schema):
         dpg.configure_item(self.tag_listbox, items=sorted(self.inspector.get_table_names(schema=schema)))
-        self.ui_select_table(sender) # because listbox has selected item, but doesnt trigger callback itself
+        self.ui_select_table(sender)  # because listbox has selected item, but doesnt trigger callback itself
 
     def run(self):
-        schemas = self.inspector.get_schema_names()
         dpg.create_context()
 
         with dpg.font_registry():
-            default_font = dpg.add_font(Path(__file__).parent.parent / 'resources'/ 'FiraMono-Regular.ttf', 16)
+            self.default_font = dpg.add_font(Path(__file__).parent.parent / 'resources' / 'FiraMono-Regular.ttf', 16)
 
-        with dpg.window(label='Window', id=self.id_window):
-            dpg.bind_font(default_font)
+        dpg.create_viewport(title='Seeqler', width=400, height=500)
 
-            with dpg.group(horizontal=True):
-                with dpg.group(width=200):
-                    dpg.add_text('Schemas')
-                    dpg.add_combo(schemas, tag=self.tag_schema_selector, callback=self.ui_select_schema)
-                    dpg.add_text('Tables')
-                    dpg.add_listbox((), tag=self.tag_listbox, callback=self.ui_select_table)
-                    with dpg.group():
-                        dpg.add_text('Limit')
-                        dpg.add_input_text(tag='select_limit', default_value='10')
-                with dpg.tab_bar(label='tabs'):
-                    with dpg.tab(label='content'):
-                        dpg.add_table(tag=self.tag_content, **self.table_params)
-                    with dpg.tab(label='schema'):
-                        dpg.add_table(tag=self.tag_schema, **self.table_params)
+        create_connection_list_window(self, window_id=self.id_list_window)
+        dpg.set_primary_window(self.id_list_window, True)
 
-        dpg.create_viewport(title='Seeqler', width=800, height=500)
-        dpg.set_primary_window(self.id_window, True)
+        if hasattr(self, "inspector"):
+            create_connection_schema_window(self, schemas=self.inspector.get_schema_names(), window_id=self.id_window)
+            dpg.set_viewport_width(800)
+            dpg.set_viewport_height(500)
+            dpg.set_primary_window(self.id_window, True)
+
         dpg.setup_dearpygui()
         dpg.show_viewport()
         dpg.start_dearpygui()
@@ -93,5 +95,8 @@ class Seeqler:
 
 
 if __name__ == '__main__':
-    app = Seeqler(sys.argv[1])
+    try:
+        app = Seeqler(sys.argv[1])
+    except IndexError:
+        app = Seeqler(None)
     app.run()
