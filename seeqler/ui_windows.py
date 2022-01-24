@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING
 import dearpygui.dearpygui as dpg
 
 if TYPE_CHECKING:
-    from seeqler.__main__ import Seeqler
+    from .app import Seeqler
 
 
 def create_connection_list_window(seeqler: 'Seeqler', window_id='connection_list', *args, **kwargs):
     with dpg.window(label='Select connection', id=window_id):
-        dpg.bind_font(seeqler.default_font)
+        dpg.bind_font(seeqler.tag_default_font)
 
         with dpg.group(horizontal=False):
             with dpg.group(width=400):
@@ -19,7 +19,7 @@ def create_connection_list_window(seeqler: 'Seeqler', window_id='connection_list
 
 def create_connection_schema_window(seeqler: 'Seeqler', schemas: list[str], window_id='main_window', *args, **kwargs):
     with dpg.window(label='Window', id=window_id):
-        dpg.bind_font(seeqler.default_font)
+        dpg.bind_font(seeqler.tag_default_font)
 
         with dpg.group(horizontal=True):
             with dpg.group(width=200):
