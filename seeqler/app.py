@@ -72,7 +72,6 @@ class Seeqler:
         self.ui_select_table(sender)  # because listbox has selected item, but doesnt trigger callback itself
 
     def run(self):
-        schemas = self.inspector.get_schema_names()
         dpg.create_context()
 
         with dpg.font_registry():
@@ -82,16 +81,15 @@ class Seeqler:
 
         dpg.create_viewport(title='Seeqler', width=800, height=500)
 
-        create_connection_list_window(self, window_id=self.id_list_window)
-        dpg.set_primary_window(self.id_list_window, True)
-
         if hasattr(self, "inspector"):
             create_connection_schema_window(self, schemas=self.inspector.get_schema_names(), window_id=self.id_window)
             dpg.set_viewport_width(800)
             dpg.set_viewport_height(500)
             dpg.set_primary_window(self.id_window, True)
+        else:
+            create_connection_list_window(self, window_id=self.id_list_window)
+            dpg.set_primary_window(self.id_list_window, True)
 
-        dpg.set_primary_window(self.id_window, True)
         dpg.setup_dearpygui()
         dpg.show_viewport()
         dpg.start_dearpygui()
