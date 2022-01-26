@@ -3,25 +3,27 @@ import uuid
 from pathlib import Path
 from dataclasses import dataclass, asdict, field
 
+from .common import SingletonMeta
+
 
 @dataclass
 class Connection:
-    uuid: str = field(default_factory=lambda: str(uuid.uuid4()))
     label: str
     connection_string: str
+    uuid: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 
-default_path = Path.home() / '.config' / 'seeqler' / 'connections.json'
+DEFAULT_PATH = Path.home() / '.config' / 'seeqler' / 'connections.json'
 
 
-class ConnectionManager:
-    def __init__(self, path: Path = default_path):
+class ConnectionManager(metaclass=SingletonMeta):
+    def __init__(self, path: Path = DEFAULT_PATH):
         self.path = path
         if not self.path.exists():
             self.path.parent.mkdir(parents=True, exist_ok=True)
             self.path.open('w').write('[]')
 
-    def list(self) -> List[Connection]:
+    def list(self) -> list[Connection]:
         data = json.load(self.path.open())
         return [Connection(**i) for i in data]
 
