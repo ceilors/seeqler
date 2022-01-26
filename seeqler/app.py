@@ -20,9 +20,7 @@ class Seeqler:
         dpg.create_context()
 
         # create font once for all the app windows
-        with dpg.font_registry(), dpg.font(
-            Path(__file__).parent.parent / 'resources' / 'FiraMono-Regular.ttf', 16, tag=TAG_DEFAULT_FONT
-        ):
+        with dpg.font_registry(), dpg.font(Path.cwd() / 'resources' / 'FiraMono-Regular.ttf', 16, tag=TAG_DEFAULT_FONT):
             dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
             dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
 

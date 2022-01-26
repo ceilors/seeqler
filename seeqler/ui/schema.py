@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from .window import Window
+from . import ConnectionListWindow
 
 
 class SchemaWindow(Window):
@@ -34,6 +35,9 @@ class SchemaWindow(Window):
                     dpg.add_table(tag=self.tag_content, **self.table_params)
                 with dpg.tab(label='schema'):
                     dpg.add_table(tag=self.tag_schema, **self.table_params)
+
+        # dummy button for tests
+        dpg.add_button(label="Switch to connection list", callback=lambda x: ConnectionListWindow().show())
 
     def show(self) -> None:
         super().show()
