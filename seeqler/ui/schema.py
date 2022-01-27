@@ -10,7 +10,7 @@ class SchemaWindow(Window):
 
         # fmt: off
         super().__init__(
-            inspector, engine, 'Текущее подключение', 'main_window', (800, 500), True,
+            inspector, engine, 'Текущее подключение', 'main_window', (800, 500), True, True,
             tag_schema_selector='schema selector', tag_listbox='table list', tag_content='current table',
             tag_schema='current schema', tag_handler='table list handler', tag_limit='select_limit',
             table_params = {
