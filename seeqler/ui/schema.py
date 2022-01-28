@@ -5,15 +5,13 @@ from . import ConnectionListWindow
 
 
 class SchemaWindow(Window):
-    def __init__(self, inspector, engine, **kwargs):
-        """Calls Window.__init__ with specified arguments. Passes inspector and engine as is."""
-
+    def __init__(self, app, **kwargs):
         # fmt: off
         super().__init__(
-            inspector, engine, 'Текущее подключение', 'main_window', (800, 500), True, True,
+            app, 'Текущее подключение', 'main_window', (800, 500),
             tag_schema_selector='schema selector', tag_listbox='table list', tag_content='current table',
             tag_schema='current schema', tag_handler='table list handler', tag_limit='select_limit',
-            table_params = {
+            table_params={
                 'header_row': True, 'borders_outerH': True, 'borders_innerV': True, 'borders_innerH': True,
                 'borders_outerV': True, 'resizable': True, 'no_host_extendX': True
             }, **kwargs
@@ -30,18 +28,24 @@ class SchemaWindow(Window):
                 with dpg.group():
                     dpg.add_text('Limit')
                     dpg.add_input_text(tag='select_limit', default_value='10')
+                    dpg.add_spacer(height=20)
+                    dpg.add_button(label='Отключиться', callback=self.ui_disconnect)
             with dpg.tab_bar(label='tabs'):
                 with dpg.tab(label='content'):
                     dpg.add_table(tag=self.tag_content, **self.table_params)
                 with dpg.tab(label='schema'):
                     dpg.add_table(tag=self.tag_schema, **self.table_params)
 
-        # dummy button for tests
-        dpg.add_button(label="Switch to connection list", callback=lambda x: ConnectionListWindow().show())
-
     def show(self) -> None:
         super().show()
-        dpg.configure_item(self.tag_schema_selector, items=self.inspector.get_schema_names())
+        dpg.configure_item(self.tag_schema_selector, items=self.app.inspector.get_schema_names())
+
+    def ui_disconnect(self) -> None:
+        ConnectionListWindow().show()
+        self.app.engine = None
+        self.app.inspector = None
+        dpg.delete_item(self.window_id)
+        self.initiated = False
 
     def ui_select_table(self, sender, table=None):
         """Select table from schema and initiate tab panel"""
@@ -56,13 +60,13 @@ class SchemaWindow(Window):
         if not table:
             return
 
-        columns = self.inspector.get_columns(table, schema=schema)
+        columns = self.app.inspector.get_columns(table, schema=schema)
         for c in columns:
             dpg.add_table_column(label=c['name'], parent=self.tag_content)
         for column in ['param', 'type', 'nullable', 'default', 'foreign key']:
             dpg.add_table_column(label=column, parent=self.tag_schema)
 
-        with self.engine.connect() as conn:
+        with self.app.engine.connect() as conn:
             for row in conn.execute(f'select * from {table} limit {limit}'):
                 with dpg.table_row(parent=self.tag_content):
                     for e in row:
@@ -70,7 +74,7 @@ class SchemaWindow(Window):
 
             foreign_keys = {
                 i['constrained_columns'][0]: '{referred_schema}.{referred_table}({referred_columns[0]})'.format(**i)
-                for i in self.inspector.get_foreign_keys(table, schema=schema)
+                for i in self.app.inspector.get_foreign_keys(table, schema=schema)
             }
             for item in columns:
                 with dpg.table_row(parent=self.tag_schema):
@@ -83,5 +87,5 @@ class SchemaWindow(Window):
     def ui_select_schema(self, sender, schema):
         """Select schema from schemas list."""
 
-        dpg.configure_item(self.tag_listbox, items=sorted(self.inspector.get_table_names(schema=schema)))
+        dpg.configure_item(self.tag_listbox, items=sorted(self.app.inspector.get_table_names(schema=schema)))
         self.ui_select_table(sender)  # because listbox has selected item, but doesnt trigger callback itself

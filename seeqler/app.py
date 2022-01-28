@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Optional
 
 import sqlalchemy as sa
 import dearpygui.dearpygui as dpg
 
-from .ui import SchemaWindow, ConnectionListWindow, TAG_DEFAULT_FONT
+from .ui import SchemaWindow, ConnectionListWindow, TAG_DEFAULT_FONT, ENCODING_CHARMAPS
 
 
 RESOURCES_PATH = Path(__file__).parent.parent / 'resources'
@@ -15,7 +14,7 @@ class Seeqler:
         self.engine = sa.create_engine(connection_string)
         self.inspector = sa.inspect(self.engine)
 
-    def __init__(self, connection_string: Optional[str] = None):
+    def __init__(self, connection_string: str | None = None):
         if connection_string:
             self.init(connection_string)
 
@@ -29,12 +28,16 @@ class Seeqler:
             dpg.add_font_range(0x2000, 0x206F)  # general punctuation
             dpg.add_font_range(0x2190, 0x21FF)  # arrows
 
+            # cp-1251 to unicode map
+            for cp1251_char, unicode_char in ENCODING_CHARMAPS:
+                dpg.add_char_remap(cp1251_char, unicode_char, parent=TAG_DEFAULT_FONT)
+
         dpg.create_viewport(title='Seeqler', width=800, height=500)
 
         if hasattr(self, "inspector"):
-            SchemaWindow(self.inspector, self.engine).show()
+            SchemaWindow(app=self).show()
         else:
-            ConnectionListWindow().show()
+            ConnectionListWindow(app=self).show()
 
         dpg.setup_dearpygui()
         dpg.show_viewport()
