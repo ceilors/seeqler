@@ -1,10 +1,17 @@
-import sys
+import argparse
 
 from .app import Seeqler
 
 
 def main():
-    app = Seeqler(sys.argv[1])
+    # Create the parser and add arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('connection_string', nargs='?')
+
+    # Parse and print the results
+    args = parser.parse_args()
+
+    app = Seeqler(args.connection_string)
     app.run()
 
 
