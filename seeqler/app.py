@@ -1,45 +1,53 @@
 from pathlib import Path
 
 import sqlalchemy as sa
-import dearpygui.dearpygui as dpg
+import toga
 
-from .ui import SchemaWindow, ConnectionListWindow, TAG_DEFAULT_FONT, ENCODING_CHARMAPS
+from seeqler.ui.language import Language
+
+from .ui import ConnectionListWindow
+
+# from .ui import SchemaWindow, ConnectionListWindow, TAG_DEFAULT_FONT, ENCODING_CHARMAPS
 
 
-RESOURCES_PATH = Path(__file__).parent.parent / 'resources'
+RESOURCES_PATH = Path(__file__).parent.parent / "resources"
+LANGUAGE = "RU-RU"  # TODO: replace with preferences
+
+
+class UIApp(toga.App):
+    def __init__(self, seeqler: "Seeqler", *args, **kwargs):
+        self.seeqler = seeqler
+        super().__init__(*args, **kwargs)
+
+    def startup(self):
+        toga.fonts.Font.register("Fira Mono", RESOURCES_PATH / "FiraMono-Regular.ttf")
+        self.default_style = toga.style.Pack(font_family="Fira Mono", font_size=10)
+
+        self.commands = toga.CommandSet(None)
+        # TODO: check if works on macOS
+        # if toga.platform.current_platform != "darwin":
+        self._impl.create_menus = lambda *x, **y: None
+
+        if self.seeqler.has_connection:
+            window = ...  # SchemaWindow(app=self, ui=app)
+        else:
+            window = ConnectionListWindow(app=self)
+
+        window.show()
 
 
 class Seeqler:
-    def init(self, connection_string: str):
-        self.engine = sa.create_engine(connection_string)
-        self.inspector = sa.inspect(self.engine)
-
     def __init__(self, connection_string: str | None = None):
+        self.lang = Language(LANGUAGE)
+
         if connection_string:
-            self.init(connection_string)
+            self.engine = sa.create_engine(connection_string)
+            self.inspector = sa.inspect(self.engine)
 
-    def run(self):
-        dpg.create_context()
+    @property
+    def has_connection(self) -> bool:
+        return hasattr(self, "inspector")
 
-        # create font once for all the app windows
-        with dpg.font_registry(), dpg.font(RESOURCES_PATH / 'FiraMono-Regular.ttf', 16, tag=TAG_DEFAULT_FONT):
-            dpg.add_font_range_hint(dpg.mvFontRangeHint_Default)
-            dpg.add_font_range_hint(dpg.mvFontRangeHint_Cyrillic)
-            dpg.add_font_range(0x2000, 0x206F)  # general punctuation
-            dpg.add_font_range(0x2190, 0x21FF)  # arrows
-
-            # cp-1251 to unicode map
-            for cp1251_char, unicode_char in ENCODING_CHARMAPS:
-                dpg.add_char_remap(cp1251_char, unicode_char, parent=TAG_DEFAULT_FONT)
-
-        dpg.create_viewport(title='Seeqler', width=800, height=500)
-
-        if hasattr(self, "inspector"):
-            SchemaWindow(app=self).show()
-        else:
-            ConnectionListWindow(app=self).show()
-
-        dpg.setup_dearpygui()
-        dpg.show_viewport()
-        dpg.start_dearpygui()
-        dpg.destroy_context()
+    def run(self) -> toga.App:
+        app = UIApp(self, self.lang.app_name, "org.ceilors.seeqler")
+        return app
