@@ -31,7 +31,7 @@ class UIApp(toga.App):
         if self.seeqler.has_connection:
             window = ...  # SchemaWindow(app=self, ui=app)
         else:
-            window = ConnectionListWindow(app=self)
+            window = ConnectionListWindow(app=self, is_main_window=True)
 
         window.show()
 

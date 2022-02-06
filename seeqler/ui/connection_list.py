@@ -7,27 +7,21 @@ from ..connection_manager import ConnectionManager, Connection
 
 
 class ConnectionListWindow(Window):
-    def __init__(self, app, **styling):
+    def __init__(self, app, **kwargs):
         self.lang = app.seeqler.lang
 
-        super().__init__(app, self.lang.win_connection_list, "connection_list", (400, 500), resizable=False, **styling)
-
-        self.tag_listbox = "connection list"
-        self.tag_new_connection = "create connection"
-        self.tag_connect_to = "connect to"
+        super().__init__(app, self.lang.win_connection_list, "connection_list", (400, 500), resizable=False, **kwargs)
 
     def get_content(self) -> toga.Box:
-        box = toga.Box("ConnListWindow", style=self.style)
-        box.style.update(direction=COLUMN)
+        box = toga.Box("ConnListWindow", style=Pack(direction=COLUMN))
 
-        wrapper = toga.Box("ConnListWrapper", style=self.style)
-        wrapper.style.update(padding=10, direction=COLUMN)
+        wrapper = toga.Box("ConnListWrapper", style=Pack(padding=10, direction=COLUMN))
 
         widget = toga.Label(self.lang.lbl_saved_connections, style=self.style)
         widget.style.update(padding_bottom=10)
         wrapper.add(widget)
         self.tbl_connection_list = toga.Table(
-            headings=["UID", self.lang.txt_connection_label], id=self.tag_listbox, style=self.style
+            headings=["UID", self.lang.txt_connection_label], id="connection list", style=self.style
         )
         wrapper.add(self.tbl_connection_list)
         self.btn_connect = toga.Button(self.lang.btn_connect, style=self.style, on_press=self.ui_connect)
@@ -35,30 +29,13 @@ class ConnectionListWindow(Window):
         box.add(wrapper)
         box.add(toga.Box(style=Pack(flex=1)))
 
-        wrapper = toga.Box("ConnListNewConnection", style=self.style)
-        wrapper.style.update(padding=10)
+        wrapper = toga.Box("ConnListNewConnection", style=Pack(padding=10))
 
         widget = toga.Button(self.lang.btn_create_connection, style=self.style, on_press=self.ui_show_create_connection)
         widget.style.update(flex=1)
 
         wrapper.add(widget)
         box.add(wrapper)
-
-        # with dpg.child_window(border=False, autosize_x=True, height=0.8 * self.height):
-        #     with dpg.group(horizontal=False):
-        #         with dpg.group(width=self.width):
-        #             dpg.add_text("Список сохраненных подключений")
-        #             dpg.add_listbox((), num_items=10, tag=self.tag_listbox)
-        #         dpg.add_button(label="Подключиться", tag=self.tag_connect_to, callback=self.ui_connect)
-        # with dpg.child_window(border=False, autosize_x=True, autosize_y=True):
-        #     with dpg.group(horizontal=True):
-        #         dpg.add_spacer(width=0.25 * self.relative_width)
-        #         dpg.add_button(
-        #             label="Создать новое подключение…",
-        #             tag=self.tag_new_connection,
-        #             width=0.75 * self.relative_width,
-        #             callback=self.ui_show_create_connection,
-        #         )
         return box
 
     def show(self) -> None:
@@ -79,42 +56,57 @@ class ConnectionListWindow(Window):
     #     except ValueError as e:
     #         print(f"Can't connect to selected connection! Reason:\n{e}")
 
-    def ui_show_create_connection(self) -> None:
-        ...
+    def ui_show_create_connection(self, widget: toga.Widget) -> None:
+        ConnectionCreateWindow(self.app, modal=True).show()
 
-    #     ConnectionCreateWindow(self.app).show()
 
-    # class ConnectionCreateWindow(Window):
-    #     def __init__(self, app, **kwargs):
-    #         # fmt: off
-    #         super().__init__(
-    #             app, 'Новое подключение', 'connection_create', (600, 500), window_resizable=False,
-    #             tag_input_label='tag label input', tag_connection_string='tag connection string',
-    #             **kwargs
-    #         )
-    #         # fmt: on
+class ConnectionCreateWindow(Window):
+    def __init__(self, app, **kwargs):
+        self.lang = app.seeqler.lang
 
-    #     def create_connection(self):
-    #         label = self.shift_value_to_unicode(dpg.get_value(self.tag_input_label))
-    #         connection = self.shift_value_to_unicode(dpg.get_value(self.tag_connection_string))
+        # fmt: off
+        super().__init__(
+            app, self.lang.win_create_connection, 'connection_create', (600, 500),
+            resizable=False, minimizable=False, closeable=False,
+            **kwargs
+        )
+        # fmt: on
 
-    #         ConnectionManager().add(Connection(label, connection))
-    #         self.close()
+    def create_connection(self, widget: toga.Widget):
+        label = self.label_input.value
+        connection = self.connstring_input.value
 
-    #     def construct(self) -> None:
-    #         dpg.add_text("Наименование подключения")
-    #         dpg.add_input_text(tag=self.tag_input_label, width=self.relative_width)
-    #         dpg.add_spacer(height=15)
+        ConnectionManager().add(Connection(label, connection))
+        self.close()
 
-    #         dpg.add_text("Строка подключения")
-    #         dpg.add_input_text(tag=self.tag_connection_string, width=self.relative_width)
-    #         dpg.add_spacer(height=15)
+    def get_content(self) -> toga.Box:
+        box = toga.Box(style=Pack(direction=COLUMN))
 
-    #         with dpg.group(horizontal=True):
-    #             dpg.add_button(label="Сохранить", callback=self.create_connection)
-    #             dpg.add_button(label="Закрыть", callback=self.close)
+        wrapper = toga.Box(style=Pack(direction=COLUMN, padding=10))
 
-    #     def close(self) -> None:
-    #         ConnectionListWindow().show()
-    #         dpg.delete_item(self.window_id)
-    #         self.initiated = False
+        wrapper.add(toga.Label(self.lang.lbl_connection_label, style=self.style))
+        self.label_input = toga.TextInput(style=self.style)
+        self.label_input.style.update(padding_bottom=15)
+        wrapper.add(self.label_input)
+
+        wrapper.add(toga.Label(self.lang.lbl_connection_string, style=self.style))
+        self.connstring_input = toga.TextInput(style=self.style)
+        wrapper.add(self.connstring_input)
+
+        box.add(wrapper)
+
+        box.add(toga.Box(style=Pack(flex=1)))
+
+        wrapper = toga.Box(style=Pack(direction=ROW, padding=10))
+        widget = toga.Button(self.lang.btn_save, on_press=self.create_connection, style=self.style)
+        widget.style.update(flex=1)
+        wrapper.add(widget)
+        widget = toga.Button(self.lang.btn_close, on_press=self.close, style=self.style)
+        widget.style.update(flex=1)
+        wrapper.add(widget)
+
+        box.add(wrapper)
+        return box
+
+    def close(self, widget: toga.Widget | None = None) -> None:
+        self.window.close()

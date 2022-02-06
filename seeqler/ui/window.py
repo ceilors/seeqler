@@ -14,8 +14,8 @@ class Window(metaclass=SingletonMeta):
         # fmt: off
         self, app: toga.App, title: str, id: str, size: tuple[int, int],
         *, position: tuple[int, int] | None = None, toolbar: list[toga.Widget] | None = None, resizable: bool = True,
-        closable: bool = True, minimizable: bool = True, on_close: Callable | None = None, modal: bool = False,
-        hide_app_name: bool = False, **styling,
+        closeable: bool = True, minimizable: bool = True, on_close: Callable | None = None, modal: bool = False,
+        hide_app_name: bool = False, is_main_window: bool = False, **styling,
         # fmt: on
     ):
         """
@@ -27,7 +27,7 @@ class Window(metaclass=SingletonMeta):
             position: position of window on screen as (x, y). Window will be centered if None is passed
             toolbar: list of toga.Widget to add to window toolbar
             resizable: if window is resizable
-            closable: if window is closable
+            closeable: if window is closeable
             minimizable: if window is minimizable
             on_close: handler to call when window is closed
             styling: keyword args will be added to `self.style`.
@@ -50,10 +50,13 @@ class Window(metaclass=SingletonMeta):
 
         # fmt: off
         self.window = toga.Window(
-            id, title, position, size, toolbar=toolbar, resizeable=resizable, closeable=closable,
+            id, title, position, size, toolbar=toolbar, resizeable=resizable, closeable=closeable,
             minimizable=minimizable, on_close=on_close
         )
         # fmt: on
+
+        if not is_main_window:
+            app.windows += self.window
 
         self.initiated = False
 

@@ -12,7 +12,7 @@ def main():
     args = parser.parse_args()
 
     app = Seeqler(args.connection_string)
-    app.run()
+    app.run().main_loop()
 
 
 if __name__ == '__main__':
