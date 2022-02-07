@@ -5,9 +5,7 @@ import toga
 
 from seeqler.ui.language import Language
 
-from .ui import ConnectionListWindow
-
-# from .ui import SchemaWindow, ConnectionListWindow, TAG_DEFAULT_FONT, ENCODING_CHARMAPS
+from .ui import ConnectionListWindow, SchemaWindow
 
 
 RESOURCES_PATH = Path(__file__).parent.parent / "resources"
@@ -29,10 +27,11 @@ class UIApp(toga.App):
         self._impl.create_menus = lambda *x, **y: None
 
         if self.seeqler.has_connection:
-            window = ...  # SchemaWindow(app=self, ui=app)
+            window = SchemaWindow(app=self)
         else:
-            window = ConnectionListWindow(app=self, is_main_window=True)
+            window = ConnectionListWindow(app=self)
 
+        self.main_window = window.get_window()
         window.show()
 
 
@@ -41,8 +40,11 @@ class Seeqler:
         self.lang = Language(LANGUAGE)
 
         if connection_string:
-            self.engine = sa.create_engine(connection_string)
-            self.inspector = sa.inspect(self.engine)
+            self.connect(connection_string)
+
+    def connect(self, connection_string: str):
+        self.engine = sa.create_engine(connection_string)
+        self.inspector = sa.inspect(self.engine)
 
     @property
     def has_connection(self) -> bool:

@@ -1,17 +1,29 @@
 app_name = "Seeqler"
 
-# connection_list.py
-win_connection_list = "Список подключений"
-lbl_saved_connections = "Список сохраненных подключений"
-btn_create_connection = "Создать новое подключение…"
-btn_connect = "Подключиться"
-txt_connection_label = "Наименование"
+# ui/connection_list.py
+cl_win_connection_list = "Список подключений"
+cl_lbl_saved_connections = "Список сохраненных подключений"
+cl_btn_create_connection = "Создать новое подключение…"
+cl_btn_connect = "Подключиться"
+cl_txt_connection_label = "Наименование"
 
-win_create_connection = "Новое подключение"
-lbl_connection_label = "Наименование подключения"
-lbl_connection_string = "Строка подключения"
-btn_save = "Создать"
-btn_close = "Отменить"
+cl_win_create_connection = "Новое подключение"
+cl_lbl_connection_label = "Наименование подключения"
+cl_lbl_connection_string = "Строка подключения"
+cl_btn_save = "Создать"
+cl_btn_close = "Отменить"
+
+cl_err_cant_connect_title = "Произошла ошибка"
+cl_err_cant_connect_message = "Невозможно подключиться к выбранному соединению! Причина:\n{error}"
 
 
-connection_string = "Строка подключения"
+# ui/schema.py
+sw_win_schema = "Текущее подключение"
+sw_lbl_schemas = "Доступные схемы"
+sw_txt_schema_name = "Наименование"
+sw_lbl_tables = "Доступные таблицы"
+sw_txt_table_name = "Наименование"
+sw_lbl_limit = "Лимит выгрузки"
+sw_btn_disconnect = "Отключиться"
+sw_btn_content_tab = "Содержимое"
+sw_btn_schema_tab = "Схема"

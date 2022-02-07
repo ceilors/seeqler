@@ -15,7 +15,7 @@ class Window(metaclass=SingletonMeta):
         self, app: toga.App, title: str, id: str, size: tuple[int, int],
         *, position: tuple[int, int] | None = None, toolbar: list[toga.Widget] | None = None, resizable: bool = True,
         closeable: bool = True, minimizable: bool = True, on_close: Callable | None = None, modal: bool = False,
-        hide_app_name: bool = False, is_main_window: bool = False, **styling,
+        hide_app_name: bool = False, **styling,
         # fmt: on
     ):
         """
@@ -55,8 +55,10 @@ class Window(metaclass=SingletonMeta):
         )
         # fmt: on
 
-        if not is_main_window:
+        try:
             app.windows += self.window
+        except:
+            pass
 
         self.initiated = False
 
@@ -90,6 +92,9 @@ class Window(metaclass=SingletonMeta):
         if not self.initiated:
             self._initiate()
 
-        if not self.modal:
-            self.app.main_window = self.get_window()
+        # if not self.modal:
+        #     self.app.main_window = self.get_window()
         self.window.show()
+
+    def hide(self) -> None:
+        self.window.close()
