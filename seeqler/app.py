@@ -8,7 +8,7 @@ from seeqler.ui.language import Language
 from .ui import ConnectionListWindow, SchemaWindow
 
 
-RESOURCES_PATH = Path(__file__).parent.parent / "resources"
+RESOURCES_PATH = Path(__file__).parents[1] / "resources"
 LANGUAGE = "RU-RU"  # TODO: replace with preferences
 
 
