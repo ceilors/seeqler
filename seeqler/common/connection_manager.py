@@ -3,7 +3,7 @@ import uuid
 from pathlib import Path
 from dataclasses import dataclass, asdict, field
 
-from .common import SingletonMeta
+from .types import SingletonMeta
 
 
 @dataclass
@@ -13,7 +13,7 @@ class Connection:
     uuid: str = field(default_factory=lambda: str(uuid.uuid4()))
 
 
-DEFAULT_PATH = Path.home() / '.config' / 'seeqler' / 'connections.json'
+DEFAULT_PATH = Path.home() / ".config" / "seeqler" / "connections.json"
 
 
 class JsonAccessor:
@@ -31,7 +31,7 @@ class JsonAccessor:
 
     def __exit__(self, *exit_args):
         if self.dumping:
-            json.dump(self.dumping, self.path.open('w'))
+            json.dump(self.dumping, self.path.open("w"))
 
 
 class ConnectionManager(metaclass=SingletonMeta):
@@ -39,8 +39,11 @@ class ConnectionManager(metaclass=SingletonMeta):
         self.path = path
         if not self.path.exists():
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.path.open('w').write('[]')
+            self.path.open("w").write("[]")
         self.json_wrapper = JsonAccessor(self.path)
+
+    def __iter__(self):
+        yield from self.list()
 
     def list(self) -> list[Connection]:
         with self.json_wrapper as jsw:
@@ -56,7 +59,7 @@ class ConnectionManager(metaclass=SingletonMeta):
         with self.json_wrapper as jsw:
             data = jsw.loading
             for i, c in enumerate(data):
-                if c['uuid'] == connection.uuid:
+                if c["uuid"] == connection.uuid:
                     data[i] = asdict(connection)
                     break
             jsw.dumping = data
@@ -65,7 +68,7 @@ class ConnectionManager(metaclass=SingletonMeta):
         with self.json_wrapper as jsw:
             data = jsw.loading
             for i, c in enumerate(data):
-                if c['uuid'] == connection.uuid:
+                if c["uuid"] == connection.uuid:
                     del data[i]
                     break
             jsw.dumping = data
@@ -76,7 +79,7 @@ class ConnectionManager(metaclass=SingletonMeta):
             case (None, str(req)) | (str(req), None):
                 appropriate = list(filter(lambda conn: (conn.uuid if label is None else conn.label) == req, conns))
                 if len(appropriate) != 1:
-                    raise ValueError('No or multiple connections found')
+                    raise ValueError("No or multiple connections found")
                 return appropriate[0]
             case _:
-                raise ValueError('Incorrect arguments')
+                raise ValueError("Incorrect arguments")

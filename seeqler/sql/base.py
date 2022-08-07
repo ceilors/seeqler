@@ -1,4 +1,4 @@
-from typing import Any, Optional, TYPE_CHECKING
+from typing import Optional, Type, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine, Inspector, CursorResult
@@ -7,35 +7,49 @@ if TYPE_CHECKING:
 __all__ = ("BaseSQL", "BaseNoSQL")
 
 
-_DRIVER_METHODS = ("connect", "raw", "select", "update", "insert", "delete", "alter")
+_DRIVER_METHODS = {"connect", "raw", "select", "update", "insert", "delete", "alter"}
 
 
 class BaseSQLMeta(type):
-    def __new__(cls: type["BaseSQLMeta"], name, bases, namespace) -> "BaseSQLMeta":
+    """
+    Default metaclass for BaseSQL driver that provides NotImplementedErrors for not implemented methods.
+    """
 
-        namespace["methods"] = _DRIVER_METHODS
+    def __new__(mcs: Type["BaseSQLMeta"], name, bases, namespace) -> "BaseSQLMeta":
+        namespace["methods"] = _DRIVER_METHODS  # default SQL methods
 
-        implemented = set(namespace.keys())
+        # keep already implemented methods
+        implemented = set(k for k, v in namespace.items() if not hasattr(v, "is_stub") and k in namespace["methods"])
+
+        # update subclasses with parental methods
         for base in bases:
-            implemented.update(dir(base))
+            implemented.update(
+                k for k, v in vars(base).items() if not hasattr(v, "is_stub") and k in namespace["methods"]
+            )
 
         # add not implemented but available methods from _DRIVER_METHODS defaults
-        for method in _DRIVER_METHODS:
-            if method in implemented:
-                continue
+        for method in namespace["methods"] - implemented:
 
-            def make_func(klass, method):
+            def make_func(klass, method_name):
                 def func(*args, **kwargs):
-                    raise NotImplementedError(f"{klass}.{method} is not implemented")
+                    raise NotImplementedError(f"{klass}.{method_name} is not implemented")
+
+                func.is_stub = True  # keep method as unimplemented
 
                 return func
 
             namespace[method] = make_func(name, method)
-        super_new = super().__new__(cls, name, bases, namespace)
+        super_new = super().__new__(mcs, name, bases, namespace)
         return super_new
 
 
 class BaseSQL(metaclass=BaseSQLMeta):
+    """
+    Basic class for all default SQL implementations.
+
+    Provides common implementations of methods for select, ... functions.
+    """
+
     engine: Optional["Engine"] = None
     inspector: Optional["Inspector"] = None
 

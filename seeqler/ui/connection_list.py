@@ -1,130 +1,160 @@
-import toga
-from toga.style import Pack
-from toga.constants import COLUMN, ROW, RIGHT
+import PyQt6.QtCore as core
+import PyQt6.QtGui as gui
+import PyQt6.QtWidgets as widget
 
-from .window import Window
-from ..connection_manager import ConnectionManager, Connection
-
-
-class ConnectionListWindow(Window):
-    def __init__(self, app, **kwargs):
-        self.lang = app.seeqler.lang
-
-        super().__init__(
-            app, self.lang.cl_win_connection_list, "connection_list", (400, 500), resizable=False, **kwargs
-        )
-
-    def get_content(self) -> toga.Box:
-        root = toga.Box(style=Pack(direction=COLUMN))
-
-        wrapper = toga.Box(style=Pack(padding=10, direction=COLUMN))
-
-        widget = toga.Label(self.lang.cl_lbl_saved_connections, style=self.style)
-        widget.style.update(padding_bottom=10)
-        wrapper.add(widget)
-        self.tbl_connection_list = toga.Table(
-            headings=["UID", self.lang.cl_txt_connection_label],
-            id="connection list",
-            style=self.style,
-            on_select=self.ui_enable_connect,
-            missing_value="—",
-        )
-        wrapper.add(self.tbl_connection_list)
-        self.btn_connect = toga.Button(
-            self.lang.cl_btn_connect, style=self.style, on_press=self.ui_connect, enabled=False
-        )
-        self.btn_connect.style.update(padding_top=10)
-        wrapper.add(self.btn_connect)
-
-        root.add(wrapper)
-        root.add(toga.Box(style=Pack(flex=1)))
-
-        wrapper = toga.Box(style=Pack(padding=10))
-
-        widget = toga.Button(
-            self.lang.cl_btn_create_connection, style=self.style, on_press=self.ui_show_create_connection
-        )
-        widget.style.update(flex=1)
-
-        wrapper.add(widget)
-        root.add(wrapper)
-        return root
-
-    def ui_enable_connect(self, table, row=None):
-        self.btn_connect.enabled = row is not None
-
-    def show(self) -> None:
-        super().show()
-        for x in ConnectionManager().list():
-            self.tbl_connection_list.data.append(x.uuid, x.label)
-
-    def ui_connect(self, button: toga.Widget | None = None) -> None:
-        from .schema import SchemaWindow
-
-        try:
-            connection = ConnectionManager().get(uuid=self.tbl_connection_list.selection.uid)
-            self.app.seeqler.connect(connection.connection_string)
-
-            schema_window = SchemaWindow(self.app)
-            self.app.main_window = schema_window.get_window()
-            schema_window.show()
-            self.hide()
-        except ValueError as e:
-            self.window.error_dialog(
-                self.lang.cl_err_cant_connect_title, self.lang.cl_err_cant_connect_message.format(error=e)
-            )
-
-    def ui_show_create_connection(self, button: toga.Widget | None = None) -> None:
-        ConnectionCreateWindow(self.app, modal=True).show()
+from ..common.connection_manager import Connection, ConnectionManager
 
 
-class ConnectionCreateWindow(Window):
-    def __init__(self, app, **kwargs):
-        self.lang = app.seeqler.lang
+class ConnectionItem(widget.QWidget):
+    """
+    Connection list element.
+    """
 
-        # fmt: off
-        super().__init__(
-            app, self.lang.cl_win_create_connection, 'connection_create', (600, 500),
-            resizable=False, minimizable=False, closeable=False,
-            **kwargs
-        )
-        # fmt: on
+    def __init__(self, parent: "ConnectionListWindow", name: str, uuid: str):
+        super().__init__()
 
-    def create_connection(self, widget: toga.Widget):
-        label = self.label_input.value
-        connection = self.connstring_input.value
+        self.daddy = parent  # ( ͡° ͜ʖ ͡°)
+        self.settings = parent.settings
+        self.uuid = uuid
 
-        ConnectionManager().add(Connection(label, connection))
-        self.close()
+        self.button_connect = gui.QAction(self.settings.lang.cl_btn_connect)
+        self.button_connect.triggered.connect(self.connect)
+        self.button_edit = gui.QAction(self.settings.lang.cl_btn_edit)
+        self.button_edit.triggered.connect(self.edit)
+        self.button_delete = gui.QAction(self.settings.lang.cl_btn_delete)
+        self.button_delete.triggered.connect(self.delete)
 
-    def get_content(self) -> toga.Box:
-        box = toga.Box(style=Pack(direction=COLUMN))
+        menu = widget.QMenu()
+        menu.addAction(self.button_connect)
+        menu.addAction(self.button_edit)
+        menu.addAction(self.button_delete)
 
-        wrapper = toga.Box(style=Pack(direction=COLUMN, padding=10))
+        button = widget.QPushButton("…")
+        button.setMenu(menu)
 
-        wrapper.add(toga.Label(self.lang.cl_lbl_connection_label, style=self.style))
-        self.label_input = toga.TextInput(style=self.style)
-        self.label_input.style.update(padding_bottom=15)
-        wrapper.add(self.label_input)
+        layout = widget.QHBoxLayout()
+        layout.addWidget(widget.QLabel(name))
+        layout.addWidget(button)
+        layout.setStretch(0, 3)
+        layout.setStretch(1, 1)
 
-        wrapper.add(toga.Label(self.lang.cl_lbl_connection_string, style=self.style))
-        self.connstring_input = toga.TextInput(style=self.style)
-        wrapper.add(self.connstring_input)
+        self.setLayout(layout)
 
-        box.add(wrapper)
+    def connect(self):
+        ...
 
-        box.add(toga.Box(style=Pack(flex=1)))
+    def edit(self):
+        connection = ConnectionManager().get(uuid=self.uuid)
+        self.daddy.open_new_item_dialog(name=connection.label, connection=connection.connection_string, edit=True)
 
-        wrapper = toga.Box(style=Pack(direction=ROW, padding=10))
-        widget = toga.Button(self.lang.cl_btn_save, on_press=self.create_connection, style=self.style)
-        widget.style.update(flex=1)
-        wrapper.add(widget)
-        widget = toga.Button(self.lang.cl_btn_close, on_press=self.close, style=self.style)
-        widget.style.update(flex=1)
-        wrapper.add(widget)
+    def delete(self):
+        mgr = ConnectionManager()
+        mgr.remove(mgr.get(uuid=self.uuid))
 
-        box.add(wrapper)
-        return box
+        if widget := getattr(self, "widget", None):
+            self.daddy.conn_list.takeItem(self.daddy.conn_list.row(widget))
+        del self
 
-    def close(self, widget: toga.Widget | None = None) -> None:
-        self.window.close()
+
+class NewConnection(widget.QDialog):
+    """
+    New connection creation dialog window.
+    """
+
+    def __init__(self, parent: "ConnectionListWindow"):
+        super().__init__()
+
+        self.daddy = parent
+        self.settings = parent.settings
+
+        self.setWindowTitle(self.settings.lang.cl_win_title_create)
+        self.setWindowModality(core.Qt.WindowModality.ApplicationModal)
+        self.resize(core.QSize(300, 180))
+
+        self.conn_name = widget.QLineEdit()
+        self.conn_string = widget.QLineEdit()
+
+        self.button_add = widget.QPushButton(self.settings.lang.cl_btn_create)
+        self.button_add.clicked.connect(self.add_new_item)
+        self.button_cancel = widget.QPushButton(self.settings.lang.cl_btn_close)
+        self.button_cancel.clicked.connect(self.hide_window)
+
+        button_layout = widget.QHBoxLayout()
+        button_layout.addWidget(self.button_add)
+        button_layout.addWidget(self.button_cancel)
+        button_layout.setSpacing(30)
+
+        name_layout = widget.QVBoxLayout()
+        name_layout.addWidget(widget.QLabel(self.settings.lang.cl_lbl_connection_label))
+        name_layout.addWidget(self.conn_name)
+
+        string_layout = widget.QVBoxLayout()
+        string_layout.addWidget(widget.QLabel(self.settings.lang.cl_lbl_connection_string))
+        string_layout.addWidget(self.conn_string)
+
+        layout = widget.QVBoxLayout()
+        layout.addLayout(name_layout)
+        layout.addStretch(1)
+        layout.addLayout(string_layout)
+        layout.addStretch(1)
+        # layout.addSpacing(15)
+        layout.addLayout(button_layout)
+
+        self.setLayout(layout)
+
+    def fill(self, name: str = "", connection: str = "", edit: bool = False):
+        self.conn_name.setText(name)
+        self.conn_string.setText(connection)
+        self.button_add.setText(self.settings.lang.cl_btn_save if edit else self.settings.lang.cl_btn_create)
+
+    def add_new_item(self):
+        label, connection = self.conn_name.text(), self.conn_string.text()
+        conn = Connection(label, connection)
+        ConnectionManager().add(conn)
+        self.daddy.add_new_item(label, conn.uuid)
+        self.conn_name.clear()
+        self.conn_string.clear()
+        self.hide_window()
+
+    def hide_window(self):
+        self.hide()
+
+
+class ConnectionListWindow(widget.QWidget):
+    def __init__(self, settings):
+        super().__init__()
+
+        self.settings = settings
+
+        self.setWindowTitle(self.settings.lang.cl_win_title_main)
+        self.setFixedSize(core.QSize(500, 400))
+
+        label = widget.QLabel(self.settings.lang.cl_lbl_saved_connections)
+        self.conn_list = widget.QListWidget()
+        button = widget.QPushButton(self.settings.lang.cl_btn_create_connection)
+        button.clicked.connect(self.open_new_item_dialog)
+
+        layout = widget.QVBoxLayout()
+        layout.addWidget(label)
+        layout.addWidget(self.conn_list)
+        layout.addWidget(button)
+        self.setLayout(layout)
+
+        self.new_conn_dialog = NewConnection(self)
+        self.fill_from_manager()
+
+    def add_new_item(self, name: str, uuid):
+        item = ConnectionItem(self, name, uuid)
+        list_item = widget.QListWidgetItem(self.conn_list)
+        list_item.setSizeHint(item.minimumSizeHint())
+        self.conn_list.setItemWidget(list_item, item)
+
+        item.widget = list_item
+
+    def fill_from_manager(self):
+        for conn in ConnectionManager():
+            self.add_new_item(conn.label, conn.uuid)
+
+    def open_new_item_dialog(self, *, name: str = "", connection: str = "", edit: bool = False):
+        self.new_conn_dialog.fill(name=name, connection=connection, edit=edit)
+        self.new_conn_dialog.show()
