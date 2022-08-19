@@ -40,16 +40,21 @@ class ConnectionItem(widget.QWidget):
 
         self.setLayout(layout)
 
+    def _get_connection(self):
+        return ConnectionManager().get(uuid=self.uuid)
+
     def connect(self):
-        ...
+        connection = self._get_connection()
+        self.settings.connection = connection
+        self.daddy.main_window.windows.schema_window.set_up(connection=connection)
+        self.daddy.main_window.windows.schema_window.show()
 
     def edit(self):
-        connection = ConnectionManager().get(uuid=self.uuid)
+        connection = self._get_connection()
         self.daddy.open_new_item_dialog(name=connection.label, connection=connection.connection_string, edit=True)
 
     def delete(self):
-        mgr = ConnectionManager()
-        mgr.remove(mgr.get(uuid=self.uuid))
+        ConnectionManager().remove(self._get_connection())
 
         if widget := getattr(self, "widget", None):
             self.daddy.conn_list.takeItem(self.daddy.conn_list.row(widget))
@@ -121,9 +126,10 @@ class NewConnection(widget.QDialog):
 
 
 class ConnectionListWindow(widget.QWidget):
-    def __init__(self, settings):
+    def __init__(self, main_window, settings):
         super().__init__()
 
+        self.main_window = main_window
         self.settings = settings
 
         self.setWindowTitle(self.settings.lang.cl_win_title_main)
