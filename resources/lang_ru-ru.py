@@ -31,8 +31,11 @@ cl_err_cant_connect_message = "Невозможно подключиться к 
 # endregion
 
 
-# not implemented
-# ui/schema.py
+# region ui/schema.py
+sw_state_connecting = "идет подключение"
+sw_state_connected = "подключено"
+sw_state_disconnected = "отключено"
+
 sw_win_schema = "Текущее подключение"
 sw_lbl_schemas = "Доступные схемы"
 sw_txt_schema_name = "Наименование"
@@ -42,3 +45,4 @@ sw_lbl_limit = "Лимит выгрузки"
 sw_btn_disconnect = "Отключиться"
 sw_btn_content_tab = "Содержимое"
 sw_btn_schema_tab = "Схема"
+# endregion

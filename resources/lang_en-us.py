@@ -30,8 +30,11 @@ cl_err_cant_connect_message = "Can't connect to selected connection! Reason:\n{e
 # endregion
 
 
-# not implemented
-# ui/schema.py
+# region ui/schema.py
+sw_state_connecting = "connecting"
+sw_state_connected = "connected"
+sw_state_disconnected = "disconnected"
+
 sw_win_schema = "Current connection"
 sw_lbl_schemas = "Schemas"
 sw_txt_schema_name = "Name"
@@ -41,3 +44,4 @@ sw_lbl_limit = "Limit"
 sw_btn_disconnect = "Disconnect"
 sw_btn_content_tab = "Show content"
 sw_btn_schema_tab = "Show schema"
+# endregion

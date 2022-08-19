@@ -1,10 +1,9 @@
 from PyQt6.QtGui import QFontDatabase
 import PyQt6.QtWidgets as widget
 
-from ..common.types import Descriptor
 from .connection_list import ConnectionListWindow
-
-# from .schema import SchemaWindow
+from .schema import SchemaWindow
+from ..common.types import Descriptor
 
 
 class MainWindow(widget.QMainWindow):
@@ -12,9 +11,13 @@ class MainWindow(widget.QMainWindow):
         super().__init__()
 
         self.windows = Descriptor()
-        self.windows.connection_manager = ConnectionListWindow(settings)
+        self.windows.connection_manager = ConnectionListWindow(self, settings)
+        self.windows.schema_window = SchemaWindow(self, settings)
 
-        self.windows.connection_manager.show()
+        if settings.connection:
+            self.windows.schema_window.show()
+        else:
+            self.windows.connection_manager.show()
 
 
 def get_app(settings):
