@@ -1,7 +1,7 @@
 import json
-import uuid
-from pathlib import Path
+import uuid as uuid_lib
 from dataclasses import dataclass, asdict, field
+from pathlib import Path
 
 from .types import SingletonMeta
 
@@ -10,7 +10,7 @@ from .types import SingletonMeta
 class Connection:
     label: str
     connection_string: str
-    uuid: str = field(default_factory=lambda: str(uuid.uuid4()))
+    uuid: str = field(default_factory=lambda: str(uuid_lib.uuid4()))
 
 
 DEFAULT_PATH = Path.home() / ".config" / "seeqler" / "connections.json"
@@ -73,11 +73,18 @@ class ConnectionManager(metaclass=SingletonMeta):
                     break
             jsw.dumping = data
 
-    def get(self, *, label: str | None = None, uuid: str | None = None) -> Connection:
+    def get(
+        self, *, label: str | None = None, uuid: str | None = None, connection_string: str | None = None
+    ) -> Connection:
         conns = self.list()
-        match label, uuid:
-            case (None, str(req)) | (str(req), None):
-                appropriate = list(filter(lambda conn: (conn.uuid if label is None else conn.label) == req, conns))
+        match label, uuid, connection_string:
+            case (None, str(req), None) | (str(req), None, None) | (None, None, str(req)):
+                appropriate = list(
+                    filter(
+                        lambda conn: (conn.label if label else conn.uuid if uuid else conn.connection_string) == req,
+                        conns,
+                    )
+                )
                 if len(appropriate) != 1:
                     raise ValueError("No or multiple connections found")
                 return appropriate[0]
