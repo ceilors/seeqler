@@ -17,7 +17,14 @@ class Seeqler:
         self.settings.connection = None
 
         if connection_string:
-            self.settings.connection = connection_string
+            from .common.connection_manager import Connection, ConnectionManager
+
+            try:
+                name = ConnectionManager().get(connection_string=connection_string).label
+            except (ValueError, AttributeError):
+                # temp connection
+                name = self.settings.lang.app_win_title_temp
+            self.settings.connection = Connection(name, connection_string)
 
     def run(self):
         app, main_window = get_app(self.settings)

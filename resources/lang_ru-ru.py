@@ -1,5 +1,9 @@
 app_name = "Seeqler"
 
+# region app.py
+app_win_title_temp = "Временное подключение"
+# endregion
+
 # region ui/connection_list.py
 # ConnectionListWindow
 cl_win_title_main = "Менеджер подключений"
