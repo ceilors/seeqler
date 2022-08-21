@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from ..common.connection_manager import Connection
 
 from inspect import signature
-import uuid
 
 
 class ConnStates:
@@ -21,10 +20,14 @@ class ConnStates:
 
 
 class Retriever(core.QObject):
+    """
+    Background task worker
+    """
+
     started = core.pyqtSignal()
     finished = core.pyqtSignal(object)
     progress = core.pyqtSignal(object)
-    # TODO: exception raised finish
+    # TODO: signal to emit after exception raised
 
     def __init__(
         self,
@@ -35,6 +38,20 @@ class Retriever(core.QObject):
         *args,
         **kwargs,
     ):
+        """
+        Background task worker. Gets ``method`` from args and runs it with ``mth_args`` and ``mth_kwargs`` passed
+        to it. If ``extra_data`` is presented, result will contain a copy of it: thus some data can be transferred
+        between "begin" and "end" events.
+
+        Method can have ``signal`` argument — it can be used to emit ``progress`` signal to show some data while
+        main task is still executing.
+
+        Args:
+            method: method to run
+            mth_args: positional arguments
+            mth_kwargs: keyword arguments
+            extra_data: dict of extra data to pass to finished signal
+        """
         super().__init__(*args, **kwargs)
 
         self.method = method
@@ -42,9 +59,13 @@ class Retriever(core.QObject):
         self.method_kwargs = mth_kwargs or dict()
         self.extra_data = extra_data
 
-    def run(self):
+    def run(self) -> None:
+        """
+        Run method from worker.
+        """
         self.started.emit()
 
+        # check if method accepts "signal" argument
         if "signal" in signature(self.method).parameters:
             data = self.method(*self.method_args, **self.method_kwargs, signal=self.progress)
         else:
@@ -189,55 +210,61 @@ class SchemaWindow(widget.QWidget):
 
     # endregion
 
-    # region Engine and SQL requests
+    # region Background tasks
 
-    def _run_next(self):
-        # create thread and bind worker to it
+    def _run_next(self) -> None:
+        """
+        Run next element of task query.
+        """
+
         try:
             el = self._query.pop(0)
         except IndexError:
             self._executing_query = False
             return
 
+        if self._executing_query:
+            return
+
         method, method_args, method_kwargs = el["method"], el.get("args", list()), el.get("kwargs", dict())
-        prepare, report, process = el.get("prepare"), el.get("report"), el.get("process")
+        at_start, progress, at_end = el.get("at_start"), el.get("progress"), el.get("at_end")
         extra_data = el.get("extra_data")
 
-        run_uuid = uuid.uuid4()
-        setattr(self, f"thread_{run_uuid}", core.QThread())
-        qthread = getattr(self, f"thread_{run_uuid}")
-
-        setattr(
-            self,
-            f"worker_{run_uuid}",
-            Retriever(method, mth_args=method_args, mth_kwargs=method_kwargs, extra_data=extra_data),
-        )
-        worker = getattr(self, f"worker_{run_uuid}")
-        worker.moveToThread(qthread)
+        # create thread and worker, move worker to thread
+        self.thread = core.QThread()
+        self.worker = Retriever(method, mth_args=method_args, mth_kwargs=method_kwargs, extra_data=extra_data)
+        self.worker.moveToThread(self.thread)
 
         # connect Qt-signals to start work and clean up after it
-        qthread.started.connect(worker.run)
-        worker.finished.connect(qthread.quit)
-        worker.finished.connect(worker.deleteLater)
-        qthread.finished.connect(qthread.deleteLater)
+        self.thread.started.connect(self.worker.run)
+        self.worker.finished.connect(self.thread.quit)
+        # qt deletion
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
 
-        qthread.finished.connect(self._run_next)
-        qthread.finished.connect(lambda: self._clean_up(run_uuid))
+        # manual deletion and run next step
+        self.thread.finished.connect(self._clean_up)
 
         # connect callbacks to signals
-        if prepare:
-            worker.started.connect(prepare)
-        if report:
-            worker.progress.connect(report)
-        if process:
-            worker.finished.connect(process)
+        if at_start:
+            self.worker.started.connect(at_start)
+        if progress:
+            self.worker.progress.connect(progress)
+        if at_end:
+            self.worker.finished.connect(at_end)
 
         # start thread and worker
-        qthread.start()
+        self.thread.start()
+        self._executing_query = True
 
-    def _clean_up(self, run_uuid: str):
-        delattr(self, f"thread_{run_uuid}")
-        delattr(self, f"worker_{run_uuid}")
+    def _clean_up(self) -> None:
+        """
+        Delete obsolete threads and workers. Stop executing query and try to execute next element of it.
+        """
+        del self.thread
+        del self.worker
+        self._executing_query = False
+        self._run_next()
 
     def run_parallel_task(
         self,
@@ -245,22 +272,39 @@ class SchemaWindow(widget.QWidget):
         method_args: Iterable | None = None,
         method_kwargs: dict | None = None,
         *,
-        prepare: Callable | None = None,
-        report: Callable | None = None,
-        process: Callable | None = None,
+        at_start: Callable | None = None,
+        progress: Callable | None = None,
+        at_end: Callable | None = None,
         extra_data: dict | None = None,
-    ):
+    ) -> None:
+        """
+        Adds new element to query of background tasks to run to. All the elements will be executed one by one at new
+        threads using Retriever-class workers.
+
+        If query is executing at the moment, new element will be just pushed to end of it. Otherwise, new element
+        will be run immediately.
+
+        Args:
+            method: function to run
+            method_args: positional arguments to pass to function
+            method_kwargs: keyword arguments to pass to function
+            at_start: function to run when Retriever.started signal is emitted
+            progress: function to run when Retriever.progress signal is emitted
+            at_end: function to run when Retriever.finished signal is emitted
+            extra_data: data to pass to "at_end" function besides task result
+        """
+
         query_element = {"method": method}
         if method_args:
             query_element["args"] = method_args
         if method_kwargs:
             query_element["kwargs"] = method_kwargs
-        if prepare:
-            query_element["prepare"] = prepare
-        if report:
-            query_element["report"] = report
-        if process:
-            query_element["process"] = process
+        if at_start:
+            query_element["at_start"] = at_start
+        if progress:
+            query_element["progress"] = progress
+        if at_end:
+            query_element["at_end"] = at_end
         if extra_data:
             query_element["extra_data"] = extra_data
 
@@ -268,9 +312,13 @@ class SchemaWindow(widget.QWidget):
         if not self._executing_query:
             self._run_next()
 
+    # endregion
+
+    # region Engine and SQL requests
+
     def sql_connect(self):
         self.run_parallel_task(
-            method=self.interface.connect, method_args=(self.connection,), process=self.sql_connect_after
+            method=self.interface.connect, method_args=(self.connection,), at_end=self.sql_connect_after
         )
 
     @core.pyqtSlot(object)
@@ -278,8 +326,10 @@ class SchemaWindow(widget.QWidget):
         self.state = ConnStates.CONNECTED
         self.sql_get_schema_names()
 
+    # -----
+
     def sql_get_schema_names(self):
-        self.run_parallel_task(method=self.interface.get_schema_names, process=self.sql_get_schema_names_after)
+        self.run_parallel_task(method=self.interface.get_schema_names, at_end=self.sql_get_schema_names_after)
 
     @core.pyqtSlot(object)
     def sql_get_schema_names_after(self, data: list):
@@ -291,9 +341,11 @@ class SchemaWindow(widget.QWidget):
             pass
         self.show_table_layout()
 
+    # -----
+
     def sql_get_tables_from_schema(self, name):
         self.run_parallel_task(
-            method=self.interface.get_table_list, method_args=(name,), process=self.sql_get_tables_from_schema_after
+            method=self.interface.get_table_list, method_args=(name,), at_end=self.sql_get_tables_from_schema_after
         )
 
     @core.pyqtSlot(object)
@@ -301,10 +353,12 @@ class SchemaWindow(widget.QWidget):
         self.result_table_names = data
         self.widget_table_list.addItems(data)
 
+    # -----
+
     def sql_get_table_meta(self, name):
         self.run_parallel_task(
             method=lambda: self.interface.get_columns(name, schema=self.params_get_schema()),
-            process=self.sql_get_table_meta_after,
+            at_end=self.sql_get_table_meta_after,
             extra_data={"name": name},
         )
 
@@ -340,11 +394,13 @@ class SchemaWindow(widget.QWidget):
 
         self.sql_get_table_contents(table)
 
+    # -----
+
     def sql_get_table_contents(self, name):
         self.run_parallel_task(
             method=self.interface.select,
             method_kwargs={"from_": name, "limit": 100},
-            process=self.sql_get_table_contents_after,
+            at_end=self.sql_get_table_contents_after,
             extra_data={"name": name},
         )
 

@@ -82,7 +82,7 @@ class BaseSQL(metaclass=BaseSQLMeta):
     ):
         request = "select "
         if distinct:
-            request += "distinct"
+            request += "distinct "
 
         request += self._stringify(what)
         request += self._stringify(from_, "from ")

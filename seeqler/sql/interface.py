@@ -57,7 +57,15 @@ class Interface:
         for method in self._impl.methods:
             if method in NOT_COPIED_METHODS:
                 continue
-            setattr(self, method, getattr(self._impl, method))
+
+            def make_func(method_name):
+                @ensure_connected
+                def func(self, *args, **kwargs):
+                    return getattr(self._impl, method_name)(*args, **kwargs)
+
+                return func
+
+            setattr(self, method, make_func(method).__get__(self, Interface))
 
     def connect(self, conn: "Connection"):
         # basic entrypoint to work with connections
