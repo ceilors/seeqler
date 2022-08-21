@@ -36,7 +36,6 @@ class ConnectionItem(widget.QWidget):
         layout.addWidget(widget.QLabel(name))
         layout.addWidget(button)
         layout.setStretch(0, 3)
-        layout.setStretch(1, 1)
 
         self.setLayout(layout)
 
@@ -48,6 +47,7 @@ class ConnectionItem(widget.QWidget):
         self.settings.connection = connection
         self.daddy.main_window.windows.schema_window.set_up(connection=connection)
         self.daddy.main_window.windows.schema_window.show()
+        self.daddy.hide()
 
     def edit(self):
         connection = self._get_connection()

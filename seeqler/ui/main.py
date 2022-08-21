@@ -15,6 +15,7 @@ class MainWindow(widget.QMainWindow):
         self.windows.schema_window = SchemaWindow(self, settings)
 
         if settings.connection:
+            self.windows.schema_window.set_up(settings.connection)
             self.windows.schema_window.show()
         else:
             self.windows.connection_manager.show()

@@ -53,9 +53,10 @@ class BaseSQL(metaclass=BaseSQLMeta):
     engine: Optional["Engine"] = None
     inspector: Optional["Inspector"] = None
 
-    def raw(self, request, *args, **kwargs) -> "CursorResult":
+    def raw(self, request, *args, **kwargs) -> list:
         with self.engine.connect() as conn:
-            return conn.execute(request, *args, **kwargs)
+            cursor: "CursorResult" = conn.execute(request, *args, **kwargs)
+            return cursor.all()
 
     @staticmethod
     def _stringify(value: str | int | list[str] | None, keyword: str = "", separator: str = ", ") -> str:
