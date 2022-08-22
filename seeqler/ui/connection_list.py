@@ -83,6 +83,8 @@ class NewConnection(widget.QDialog):
         self.button_add.clicked.connect(self.add_new_item)
         self.button_cancel = widget.QPushButton(self.settings.lang.cl_btn_close)
         self.button_cancel.clicked.connect(self.hide_window)
+        self.button_opendialog = widget.QPushButton(self.settings.lang.cl_btn_opendialog)
+        self.button_opendialog.clicked.connect(self.open_window)
 
         button_layout = widget.QHBoxLayout()
         button_layout.addWidget(self.button_add)
@@ -93,9 +95,13 @@ class NewConnection(widget.QDialog):
         name_layout.addWidget(widget.QLabel(self.settings.lang.cl_lbl_connection_label))
         name_layout.addWidget(self.conn_name)
 
+        open_layout = widget.QHBoxLayout()
+        open_layout.addWidget(self.conn_string)
+        open_layout.addWidget(self.button_opendialog)
+
         string_layout = widget.QVBoxLayout()
         string_layout.addWidget(widget.QLabel(self.settings.lang.cl_lbl_connection_string))
-        string_layout.addWidget(self.conn_string)
+        string_layout.addLayout(open_layout)
 
         layout = widget.QVBoxLayout()
         layout.addLayout(name_layout)
@@ -123,6 +129,12 @@ class NewConnection(widget.QDialog):
 
     def hide_window(self):
         self.hide()
+
+    def open_window(self):
+        filename, _ = widget.QFileDialog.getOpenFileName(self, self.settings.lang.cl_opendialog_title, "")
+        if filename:
+            # TODO: update connection string format
+            self.conn_string.setText("sqlite:///" + filename)
 
 
 class ConnectionListWindow(widget.QWidget):

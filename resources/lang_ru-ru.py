@@ -19,6 +19,8 @@ cl_lbl_connection_string = "Строка подключения"
 cl_btn_create = "Создать"
 cl_btn_save = "Сохранить"
 cl_btn_close = "Отменить"
+cl_btn_opendialog = "..."
+cl_opendialog_title = "Выберите файл базы данных"
 
 # ConnectionItem
 cl_btn_connect = "Подключиться"

@@ -24,6 +24,8 @@ cl_btn_close = "Discard"
 cl_btn_connect = "Connect"
 cl_btn_edit = "Edit"
 cl_btn_delete = "Delete"
+cl_btn_opendialog = "..."
+cl_opendialog_title = "Select database file"
 # not used
 cl_err_cant_connect_title = "An error occured"
 cl_err_cant_connect_message = "Can't connect to selected connection! Reason:\n{error}"
