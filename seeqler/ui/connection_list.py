@@ -30,15 +30,16 @@ class ConnectionItem(widget.QWidget):
         menu.addAction(self.button_edit)
         menu.addAction(self.button_delete)
 
-        button = widget.QPushButton(self.settings.lang.cl_menu_text)
-        button.setMenu(menu)
+        self.menu_button = widget.QPushButton(self.settings.lang.cl_menu_text)
+        self.menu_button.setMenu(menu)
 
         layout = widget.QHBoxLayout()
         layout.addWidget(widget.QLabel(name))
-        layout.addWidget(button)
+        layout.addWidget(self.menu_button)
         layout.setStretch(0, 3)
 
         self.setLayout(layout)
+
 
     def _get_connection(self):
         return ConnectionManager().get(uuid=self.uuid)
@@ -61,10 +62,15 @@ class ConnectionItem(widget.QWidget):
             self.daddy.conn_list.takeItem(self.daddy.conn_list.row(widget))
         del self
 
+    def mouseReleaseEvent(self, event):
+        match event.button():
+            case core.Qt.MouseButton.RightButton:
+                self.menu_button.click()
+
     def mouseDoubleClickEvent(self, event):
-        if event.button() == core.Qt.MouseButton.LeftButton:
-            self.connect()
-        return
+        match event.button():
+            case core.Qt.MouseButton.LeftButton:
+                self.connect()
 
 
 class NewConnection(widget.QDialog):
