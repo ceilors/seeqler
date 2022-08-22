@@ -5,9 +5,6 @@ import PyQt6.QtWidgets as widget
 class QLineEdit(widget.QLineEdit):
     keyPressed = core.pyqtSignal(int)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def keyPressEvent(self, event):
         super().keyPressEvent(event)
         self.keyPressed.emit(event.key())
