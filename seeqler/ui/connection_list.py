@@ -61,6 +61,10 @@ class ConnectionItem(widget.QWidget):
             self.daddy.conn_list.takeItem(self.daddy.conn_list.row(widget))
         del self
 
+    def mouseDoubleClickEvent(self, event):
+        if event.button() == core.Qt.MouseButton.LeftButton:
+            self.connect()
+        return
 
 
 class NewConnection(widget.QDialog):
