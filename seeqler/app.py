@@ -20,11 +20,11 @@ class Seeqler:
             from .common.connection_manager import Connection, ConnectionManager
 
             try:
-                name = ConnectionManager().get(connection_string=connection_string).label
+                self.settings.connection = ConnectionManager().get(connection_string=connection_string)
             except (ValueError, AttributeError):
                 # temp connection
                 name = self.settings.lang.app_win_title_temp
-            self.settings.connection = Connection(name, connection_string)
+                self.settings.connection = Connection(name, connection_string)
 
     def run(self):
         app, main_window = get_app(self.settings)
