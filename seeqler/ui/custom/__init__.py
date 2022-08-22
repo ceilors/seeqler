@@ -1,1 +1,1 @@
-from qlineedit import QLineEdit
+from .qlineedit import QLineEdit
