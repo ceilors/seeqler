@@ -103,11 +103,12 @@ class SchemaWindow(widget.QWidget):
     def __init__(self, main_window, settings):
         super().__init__()
 
+        self.setObjectName("SchemaWindow")
         self.main_window = main_window
         self.settings = settings
         self.set_defaults()
 
-        self.setFixedSize(core.QSize(800, 500))
+        self.resize(core.QSize(800, 500))
         layout = widget.QHBoxLayout()
         layout.addWidget(self._get_loader())
         self.setLayout(layout)
@@ -173,7 +174,7 @@ class SchemaWindow(widget.QWidget):
         left_pane.addWidget(self.widget_disconnect_btn)
         # endregion
 
-        # region main_content
+        # region right_pane
         self.widget_tab_holder = widget.QTabWidget()
         for tabname, tab in getattr(self, "widget_tabs", {}).items():
             self.widget_tab_holder.addTab(tab, tabname)
@@ -182,15 +183,29 @@ class SchemaWindow(widget.QWidget):
             self.widget_tabs = dict()
         self.to_clean.extend(("widget_tab_holder", "widget_tabs"))
 
-        main_content = widget.QVBoxLayout()
-        main_content.addWidget(self.widget_tab_holder)
+        right_pane = widget.QVBoxLayout()
+        right_pane.addWidget(self.widget_tab_holder)
         # endregion
 
         layout = widget.QHBoxLayout()
-        layout.addLayout(left_pane)
-        layout.addLayout(main_content)
-        layout.setStretchFactor(left_pane, 1)
-        layout.setStretchFactor(main_content, 3)
+        left_pane.setContentsMargins(10, 10, 0, 10)
+        right_pane.setContentsMargins(10, 10, 10, 10)
+
+        self.left_pane_widget = widget.QWidget()
+        self.left_pane_widget.setObjectName("SchemaLeftPane")
+        self.left_pane_widget.setLayout(left_pane)
+        self.left_pane_widget.setMaximumWidth(300)
+
+        self.right_pane_widget = widget.QWidget()
+        self.right_pane_widget.setObjectName("SchemaRightPane")
+        self.right_pane_widget.setLayout(right_pane)
+
+        self.to_clean.extend(("left_pane_widget", "right_pane_widget"))
+
+        layout.addWidget(self.left_pane_widget, 1)
+        layout.addWidget(self.right_pane_widget, 3)
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
 
         # deleting old layout
         clear_layout(self.layout())
