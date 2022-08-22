@@ -2,6 +2,7 @@ import PyQt6.QtCore as core
 import PyQt6.QtGui as gui
 import PyQt6.QtWidgets as widget
 
+from .common import QLineEdit
 from ..common.connection_manager import Connection, ConnectionManager
 
 
@@ -76,8 +77,8 @@ class NewConnection(widget.QDialog):
         self.setWindowModality(core.Qt.WindowModality.ApplicationModal)
         self.resize(core.QSize(300, 180))
 
-        self.conn_name = widget.QLineEdit()
-        self.conn_string = widget.QLineEdit()
+        self.conn_name = QLineEdit()
+        self.conn_string = QLineEdit()
 
         self.button_add = widget.QPushButton(self.settings.lang.cl_btn_create)
         self.button_add.clicked.connect(self.add_new_item)
@@ -120,14 +121,31 @@ class NewConnection(widget.QDialog):
 
     def add_new_item(self):
         label, connection = self.conn_name.text(), self.conn_string.text()
+
+        if not label or not connection:
+            if not label:
+                self.conn_name.makeError(placeholder=self.settings.lang.cl_lbl_connection_label_error)
+            if not connection:
+                self.conn_string.makeError(placeholder=self.settings.lang.cl_lbl_connection_string_error)
+            return
+
         conn = Connection(label, connection)
         ConnectionManager().add(conn)
         self.daddy.add_new_item(label, conn.uuid)
-        self.conn_name.clear()
-        self.conn_string.clear()
         self.hide_window()
 
+    def clear(self):
+        self.conn_name.clear()
+        self.conn_name.keyPressed.emit(0)
+        self.conn_string.clear()
+        self.conn_string.keyPressed.emit(0)
+
+    def closeEvent(self, event) -> None:
+        self.clear()
+        super().closeEvent(event)
+
     def hide_window(self):
+        self.clear()
         self.hide()
 
     def open_window(self):

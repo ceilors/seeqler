@@ -9,8 +9,6 @@ app_win_title_temp = "Временное подключение"
 cl_win_title_main = "Менеджер подключений"
 cl_lbl_saved_connections = "Список сохраненных подключений"
 cl_btn_create_connection = "Создать новое подключение…"
-# not used:
-cl_txt_connection_label = "Наименование"
 
 # NewConnection
 cl_win_title_create = "Новое подключение"
@@ -21,6 +19,8 @@ cl_btn_save = "Сохранить"
 cl_btn_close = "Отменить"
 cl_btn_opendialog = "..."
 cl_opendialog_title = "Выберите файл базы данных"
+cl_lbl_connection_label_error = "Введите наименование"
+cl_lbl_connection_string_error = "Введите данные"
 
 # ConnectionItem
 cl_btn_connect = "Подключиться"

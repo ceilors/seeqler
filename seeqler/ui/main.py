@@ -28,7 +28,8 @@ def get_app(settings):
     font_id = QFontDatabase.addApplicationFont(str(settings.resources_path / "FiraMono-Regular.ttf"))
     if font_id >= 0:
         font_name = QFontDatabase.applicationFontFamilies(font_id)[0]
-        app.setStyleSheet(f'* {{ font-family: "{font_name}"; }}')
+    with open(settings.resources_path / "app_style.qss", "r") as qss:
+        app.setStyleSheet(qss.read())
 
     window = MainWindow(settings)
 

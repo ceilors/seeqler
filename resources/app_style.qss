@@ -1,0 +1,8 @@
+* {
+    font-family: "Fira Mono", "system-ui";
+}
+
+QLineEdit.error {
+    color: red;
+    border: 1px solid red;
+}
