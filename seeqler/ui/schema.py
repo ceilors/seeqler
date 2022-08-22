@@ -80,6 +80,7 @@ class Retriever(core.QObject):
 class SchemaWindow(widget.QWidget):
     _state = ConnStates.DISCONNECTED
     _query, _executing_query = [], False
+    to_clean = []
 
     @property
     def state(self):
@@ -111,6 +112,12 @@ class SchemaWindow(widget.QWidget):
         layout.addWidget(self._get_loader())
         self.setLayout(layout)
 
+    def clear(self):
+        clear_layout(self.layout())
+        for item in self.to_clean:
+            if hasattr(self, item):
+                delattr(self, item)
+
     def set_defaults(self):
         self.initiated = False
         self.state = ConnStates.DISCONNECTED
@@ -126,6 +133,7 @@ class SchemaWindow(widget.QWidget):
 
     def closeEvent(self, event):
         self.set_defaults()
+        self.clear()
         self.main_window.windows.connection_manager.show()
         super().hide()
 
@@ -147,13 +155,17 @@ class SchemaWindow(widget.QWidget):
         if hasattr(self, "result_schema_names"):
             self.widget_schema_box.addItems(self.result_schema_names)
         self.widget_schema_box.currentIndexChanged.connect(self.event_change_schema)
+        self.to_clean.extend(("widget_schema_box", "result_schema_names"))
 
         self.widget_table_list = widget.QListWidget()
         if hasattr(self, "result_table_names"):
             self.widget_table_list.addItems(self.result_table_names)
         self.widget_table_list.doubleClicked.connect(self.event_change_table)
+        self.to_clean.extend(("widget_table_list", "result_table_names"))
 
         self.widget_disconnect_btn = widget.QPushButton(self.settings.lang.sw_btn_disconnect)
+        self.widget_disconnect_btn.clicked.connect(lambda: self.closeEvent(None))
+        self.to_clean.append("widget_disconnect_btn")
 
         left_pane = widget.QVBoxLayout()
         left_pane.addWidget(self.widget_schema_box)
@@ -168,6 +180,7 @@ class SchemaWindow(widget.QWidget):
         else:
             self.widget_tab_holder.addTab(self.get_default_tab_widget(), "Пусто")
             self.widget_tabs = dict()
+        self.to_clean.extend(("widget_tab_holder", "widget_tabs"))
 
         main_content = widget.QVBoxLayout()
         main_content.addWidget(self.widget_tab_holder)
