@@ -30,7 +30,7 @@ class ConnectionItem(widget.QWidget):
         menu.addAction(self.button_edit)
         menu.addAction(self.button_delete)
 
-        button = widget.QPushButton("…")
+        button = widget.QPushButton(self.settings.lang.cl_menu_text)
         button.setMenu(menu)
 
         layout = widget.QHBoxLayout()
@@ -62,6 +62,7 @@ class ConnectionItem(widget.QWidget):
         del self
 
 
+
 class NewConnection(widget.QDialog):
     """
     New connection creation dialog window.
@@ -84,8 +85,9 @@ class NewConnection(widget.QDialog):
         self.button_add.clicked.connect(self.add_new_item)
         self.button_cancel = widget.QPushButton(self.settings.lang.cl_btn_close)
         self.button_cancel.clicked.connect(self.hide_window)
-        self.button_opendialog = widget.QPushButton(self.settings.lang.cl_btn_opendialog)
+        self.button_opendialog = widget.QPushButton(self.settings.lang.cl_menu_text)
         self.button_opendialog.clicked.connect(self.open_window)
+        self.button_opendialog.setMaximumSize(core.QSize(30, 50))
 
         button_layout = widget.QHBoxLayout()
         button_layout.addWidget(self.button_add)

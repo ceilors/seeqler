@@ -10,6 +10,8 @@ cl_win_title_main = "Connection list"
 cl_lbl_saved_connections = "Saved connections"
 cl_btn_create_connection = "Create new connection…"
 
+cl_menu_text = "…"
+
 # NewConnection
 cl_win_title_create = "New connection"
 cl_lbl_connection_label = "Connection title"
@@ -17,7 +19,6 @@ cl_lbl_connection_string = "Connection string"
 cl_btn_create = "Create"
 cl_btn_save = "Save"
 cl_btn_close = "Discard"
-cl_btn_opendialog = "..."
 cl_opendialog_title = "Select database file"
 cl_lbl_connection_label_error = "Specify connection name"
 cl_lbl_connection_string_error = "Specify connection string"
