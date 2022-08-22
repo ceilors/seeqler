@@ -206,7 +206,12 @@ class SchemaWindow(widget.QWidget):
         self.sql_get_tables_from_schema(self.widget_schema_box.currentText())
 
     def event_change_table(self, idx: core.QModelIndex):
-        self.sql_get_table_meta(self.widget_table_list.item(idx.row()).text())
+        text = self.widget_table_list.item(idx.row()).text()
+
+        if text in getattr(self, "widget_tabs", {}):
+            self.widget_tab_holder.setCurrentWidget(self.widget_tabs[text])
+        else:
+            self.sql_get_table_meta(text)
 
     # endregion
 
