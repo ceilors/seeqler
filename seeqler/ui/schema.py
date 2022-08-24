@@ -13,6 +13,9 @@ if TYPE_CHECKING:
 from inspect import signature
 
 
+BTN_AT_RIGHT = widget.QTabBar.ButtonPosition.RightSide
+
+
 class ConnStates:
     DISCONNECTED = "disconnected"
     CONNECTING = "connecting"
@@ -150,6 +153,16 @@ class SchemaWindow(widget.QWidget):
         tab.setLayout(layout)
         return tab
 
+    def tab_close(self, idx: int):
+        tab = self.widget_tab_holder.tabBar().tabText(idx)
+        del self.widget_tabs[tab]
+
+        self.widget_tab_holder.removeTab(idx)
+
+        if not self.widget_tabs:
+            self.widget_tab_holder.addTab(self.get_default_tab_widget(), "Пусто")
+            self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
+
     def show_table_layout(self):
         # region left_pane
         self.widget_schema_box = widget.QComboBox()
@@ -176,10 +189,14 @@ class SchemaWindow(widget.QWidget):
 
         # region right_pane
         self.widget_tab_holder = widget.QTabWidget()
-        for tabname, tab in getattr(self, "widget_tabs", {}).items():
-            self.widget_tab_holder.addTab(tab, tabname)
+        self.widget_tab_holder.setObjectName("WidgetTabHolder")
+        self.widget_tab_holder.setTabsClosable(True)
+        self.widget_tab_holder.tabCloseRequested.connect(self.tab_close)
+        for i, tab in enumerate(getattr(self, "widget_tabs", {})):
+            self.widget_tab_holder.addTab(tab[1], tab[0])
         else:
             self.widget_tab_holder.addTab(self.get_default_tab_widget(), "Пусто")
+            self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
             self.widget_tabs = dict()
         self.to_clean.extend(("widget_tab_holder", "widget_tabs"))
 
