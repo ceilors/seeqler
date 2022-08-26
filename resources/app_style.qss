@@ -1,0 +1,14 @@
+* {
+  font-family: "Fira Mono", "system-ui";
+}
+
+QLineEdit.error {
+  color: red;
+  border: 1px solid red;
+}
+
+#WidgetTabHolder QTabBar::close-button {
+}
+
+#WidgetTabHolder::tab-bar::close-button:hover {
+}
