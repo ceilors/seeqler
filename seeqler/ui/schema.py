@@ -274,13 +274,13 @@ class SchemaWindow(widget.QWidget):
 
         methods = {True: "setEnabled", False: "setDisabled"}
 
-        getattr(tab.btn_left, methods[tab.offset >= 100])(True)
+        getattr(tab.btn_left, methods[tab.offset >= self.settings.rows_per_page])(True)
         getattr(tab.btn_right, methods[current_rows != row_number])(True)
 
     def change_table_page(self, table_name: str, sign: int):
         tab = self.widget_tabs[table_name]
 
-        tab.offset += sign * 100
+        tab.offset += sign * self.settings.rows_per_page
         self.sql_get_table_contents(table_name, tab.offset)
 
     def get_default_tab_widget(self):
@@ -518,7 +518,7 @@ class SchemaWindow(widget.QWidget):
     def sql_get_table_contents(self, name, offset: int = 0):
         self.run_parallel_task(
             method=self.interface.get_table_data,
-            method_kwargs={"table": name, "offset": offset},
+            method_kwargs={"table": name, "offset": offset, "limit": self.settings.rows_per_page},
             at_end=self.sql_get_table_contents_after,
             extra_data={"name": name},
         )

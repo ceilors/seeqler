@@ -14,6 +14,7 @@ class Seeqler:
         self.settings = Descriptor()
         self.settings.lang = Language(LANGUAGE)
         self.settings.resources_path = RESOURCES_PATH
+        self.settings.rows_per_page = 100
         self.settings.connection = None
 
         if connection_string:

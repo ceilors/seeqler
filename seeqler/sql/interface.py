@@ -94,7 +94,7 @@ class Interface:
         return self.inspector.get_columns(table, schema=schema)
 
     @ensure_connected
-    def get_table_data(self, table: str, limit: int = 100, offset: int = 0):
+    def get_table_data(self, table: str, limit: int, offset: int):
         data = self.select(from_=table, limit=limit, offset=offset)
         rows: int = self.select(what="count(*) ", from_=table)[0][0]
         return {"contents": data, "rows": rows}
