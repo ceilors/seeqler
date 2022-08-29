@@ -27,10 +27,6 @@ cl_lbl_connection_string_error = "Введите данные"
 cl_btn_connect = "Подключиться"
 cl_btn_edit = "Изменить"
 cl_btn_delete = "Удалить"
-
-# not used
-cl_err_cant_connect_title = "Произошла ошибка"
-cl_err_cant_connect_message = "Невозможно подключиться к выбранному соединению! Причина:\n{error}"
 # endregion
 
 
@@ -48,4 +44,8 @@ sw_lbl_limit = "Лимит выгрузки"
 sw_btn_disconnect = "Отключиться"
 sw_btn_content_tab = "Содержимое"
 sw_btn_schema_tab = "Схема"
+
+sw_tab_statusbar_of = "из"
+sw_tab_statusbar_left = "‹"
+sw_tab_statusbar_right = "›"
 # endregion

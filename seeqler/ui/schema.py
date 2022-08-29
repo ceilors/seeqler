@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Callable, Iterable
+from typing import TYPE_CHECKING, Callable, Iterable, Any
 
 import PyQt6.QtCore as core
 import PyQt6.QtGui as gui
@@ -146,23 +146,6 @@ class SchemaWindow(widget.QWidget):
             raise RuntimeError("Set up connection first!")
         super().show(*args, **kwargs)
 
-    def get_default_tab_widget(self):
-        tab = widget.QWidget()
-        layout = widget.QVBoxLayout()
-        layout.addWidget(self._get_loader())
-        tab.setLayout(layout)
-        return tab
-
-    def tab_close(self, idx: int):
-        tab = self.widget_tab_holder.tabBar().tabText(idx)
-        del self.widget_tabs[tab]
-
-        self.widget_tab_holder.removeTab(idx)
-
-        if not self.widget_tabs:
-            self.widget_tab_holder.addTab(self.get_default_tab_widget(), "Пусто")
-            self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
-
     def show_table_layout(self):
         # region left_pane
         self.widget_schema_box = widget.QComboBox()
@@ -192,12 +175,11 @@ class SchemaWindow(widget.QWidget):
         self.widget_tab_holder.setObjectName("WidgetTabHolder")
         self.widget_tab_holder.setTabsClosable(True)
         self.widget_tab_holder.tabCloseRequested.connect(self.tab_close)
-        for i, tab in enumerate(getattr(self, "widget_tabs", {})):
-            self.widget_tab_holder.addTab(tab[1], tab[0])
-        else:
-            self.widget_tab_holder.addTab(self.get_default_tab_widget(), "Пусто")
-            self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
-            self.widget_tabs = dict()
+
+        self.widget_tab_holder.addTab(self.create_tab(default=True), "Пусто")
+        self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
+        self.widget_tabs = dict()
+
         self.to_clean.extend(("widget_tab_holder", "widget_tabs"))
 
         right_pane = widget.QVBoxLayout()
@@ -229,6 +211,96 @@ class SchemaWindow(widget.QWidget):
 
         # setting new
         self.setLayout(layout)
+
+    # region Tab GUI
+
+    def create_tab(self, table_name: str = None, columns: list[dict] = None, default=False):
+        if default or columns is None or table_name is None:
+            return self.get_default_tab_widget()
+
+        tab = widget.QWidget()
+        layout = widget.QVBoxLayout()
+
+        tab.offset = 0  # offset of table data
+
+        tab.table = widget.QTableWidget()
+        tab.table.setColumnCount(len(columns))
+        tab.table.setHorizontalHeaderLabels(x["name"] for x in columns)
+        tab.table.setRowCount(5)  # default row count until table is filled up
+
+        bottom_layout = widget.QHBoxLayout()
+
+        tab.statusbar = widget.QLabel()
+        tab.statusbar.setText(f"1-? {self.settings.lang.sw_tab_statusbar_of} ?")
+        tab.statusbar.setAlignment(core.Qt.AlignmentFlag.AlignCenter)
+
+        bottom_layout.addWidget(tab.statusbar, alignment=core.Qt.AlignmentFlag.AlignCenter)
+
+        tab.btn_left = widget.QPushButton()
+        tab.btn_left.setText(self.settings.lang.sw_tab_statusbar_left)
+        tab.btn_left.clicked.connect(lambda: self.change_table_page(table_name, -1))
+        tab.btn_left.setDisabled(True)
+
+        tab.btn_right = widget.QPushButton()
+        tab.btn_right.setText(self.settings.lang.sw_tab_statusbar_right)
+        tab.btn_right.clicked.connect(lambda: self.change_table_page(table_name, 1))
+        tab.btn_right.setDisabled(True)
+
+        bottom_layout.insertWidget(0, tab.btn_left, alignment=core.Qt.AlignmentFlag.AlignLeft)
+        bottom_layout.addWidget(tab.btn_right, alignment=core.Qt.AlignmentFlag.AlignRight)
+
+        layout.addWidget(tab.table)
+        layout.addLayout(bottom_layout)
+        tab.setLayout(layout)
+        return tab
+
+    def fillup_table(self, table_name: str, data: list[list[Any]]):
+        tab = self.widget_tabs[table_name]
+
+        contents = data["contents"]
+        row_number = data["rows"]
+        table_rows = len(contents)
+        current_rows = tab.offset + table_rows
+
+        tab.table.setRowCount(table_rows)
+        tab.table.scrollToTop()
+
+        for row, data_row in enumerate(contents):
+            for col, cell in enumerate(data_row):
+                content = widget.QTableWidgetItem(str(cell))
+                tab.table.setItem(row, col, content)
+
+        tab.statusbar.setText(f"{tab.offset + 1}-{current_rows} {self.settings.lang.sw_tab_statusbar_of} {row_number}")
+
+        methods = {True: "setEnabled", False: "setDisabled"}
+
+        getattr(tab.btn_left, methods[tab.offset >= 100])(True)
+        getattr(tab.btn_right, methods[current_rows != row_number])(True)
+
+    def change_table_page(self, table_name: str, sign: int):
+        tab = self.widget_tabs[table_name]
+
+        tab.offset += sign * 100
+        self.sql_get_table_contents(table_name, tab.offset)
+
+    def get_default_tab_widget(self):
+        tab = widget.QWidget()
+        layout = widget.QVBoxLayout()
+        layout.addWidget(self._get_loader())
+        tab.setLayout(layout)
+        return tab
+
+    def tab_close(self, idx: int):
+        tab = self.widget_tab_holder.tabBar().tabText(idx)
+        del self.widget_tabs[tab]
+
+        self.widget_tab_holder.removeTab(idx)
+
+        if not self.widget_tabs:
+            self.widget_tab_holder.addTab(self.create_tab(default=True), "Пусто")
+            self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
+
+    # endregion
 
     # region Params
 
@@ -407,7 +479,7 @@ class SchemaWindow(widget.QWidget):
 
     def sql_get_table_meta(self, name):
         self.run_parallel_task(
-            method=lambda: self.interface.get_columns(name, schema=self.params_get_schema()),
+            method=lambda: self.interface.get_table_columns(name, schema=self.params_get_schema()),
             at_end=self.sql_get_table_meta_after,
             extra_data={"name": name},
         )
@@ -421,10 +493,7 @@ class SchemaWindow(widget.QWidget):
             self.widget_tab_holder.removeTab(0)
             self.widget_tabs = dict()
 
-        tab = widget.QTableWidget()
-        tab.setColumnCount(len(columns))
-        tab.setHorizontalHeaderLabels(x["name"] for x in columns)
-        tab.setRowCount(10)
+        tab = self.create_tab(table, columns)
         self.widget_tabs[table] = tab
         self.widget_tab_holder.addTab(tab, table)
         self.widget_tab_holder.setCurrentWidget(tab)
@@ -446,25 +515,19 @@ class SchemaWindow(widget.QWidget):
 
     # -----
 
-    def sql_get_table_contents(self, name):
+    def sql_get_table_contents(self, name, offset: int = 0):
         self.run_parallel_task(
-            method=self.interface.select,
-            method_kwargs={"from_": name, "limit": 100},
+            method=self.interface.get_table_data,
+            method_kwargs={"table": name, "offset": offset},
             at_end=self.sql_get_table_contents_after,
             extra_data={"name": name},
         )
 
     @core.pyqtSlot(object)
     def sql_get_table_contents_after(self, data: dict):
-        table = data.get("name")
+        table_name = data.get("name")
         contents = data.get("data")
 
-        table: widget.QTableWidget = self.widget_tabs[table]
-        table.setRowCount(len(contents))
-
-        for row, data_row in enumerate(contents):
-            for col, cell in enumerate(data_row):
-                content = widget.QTableWidgetItem(str(cell))
-                table.setItem(row, col, content)
+        self.fillup_table(table_name, contents)
 
     # endregion

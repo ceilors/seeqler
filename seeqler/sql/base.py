@@ -79,6 +79,7 @@ class BaseSQL(metaclass=BaseSQLMeta):
         group: str | list[str] | None = None,
         order: str | list[str] | None = None,
         limit: int | str | None = None,
+        offset: int | str | None = None,
     ):
         request = "select "
         if distinct:
@@ -90,6 +91,7 @@ class BaseSQL(metaclass=BaseSQLMeta):
         request += self._stringify(group, "group by ")
         request += self._stringify(order, "order by ")
         request += self._stringify(limit, "limit ")
+        request += self._stringify(offset, "offset ")
         request += ";"
 
         return self.raw(request)

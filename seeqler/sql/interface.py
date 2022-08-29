@@ -90,5 +90,11 @@ class Interface:
         return sorted(self.inspector.get_table_names(schema=schema))
 
     @ensure_connected
-    def get_columns(self, table: str, schema: str | None = None) -> list[str]:
+    def get_table_columns(self, table: str, schema: str | None = None) -> list[dict]:
         return self.inspector.get_columns(table, schema=schema)
+
+    @ensure_connected
+    def get_table_data(self, table: str, limit: int = 100, offset: int = 0):
+        data = self.select(from_=table, limit=limit, offset=offset)
+        rows: int = self.select(what="count(*) ", from_=table)[0][0]
+        return {"contents": data, "rows": rows}

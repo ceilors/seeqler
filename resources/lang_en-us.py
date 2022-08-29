@@ -27,9 +27,6 @@ cl_lbl_connection_string_error = "Specify connection string"
 cl_btn_connect = "Connect"
 cl_btn_edit = "Edit"
 cl_btn_delete = "Delete"
-# not used
-cl_err_cant_connect_title = "An error occured"
-cl_err_cant_connect_message = "Can't connect to selected connection! Reason:\n{error}"
 # endregion
 
 
@@ -47,4 +44,8 @@ sw_lbl_limit = "Limit"
 sw_btn_disconnect = "Disconnect"
 sw_btn_content_tab = "Show content"
 sw_btn_schema_tab = "Show schema"
+
+sw_tab_statusbar_of = "of"
+sw_tab_statusbar_left = "<"
+sw_tab_statusbar_right = ">"
 # endregion
