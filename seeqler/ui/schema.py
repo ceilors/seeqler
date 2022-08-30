@@ -160,18 +160,19 @@ class SchemaWindow(widget.QWidget):
         self.widget_table_list.doubleClicked.connect(self.event_change_table)
         self.to_clean.extend(("widget_table_list", "result_table_names"))
 
-        self.widget_disconnect_btn = widget.QPushButton(self.settings.lang.sw_btn_disconnect)
-        self.widget_disconnect_btn.clicked.connect(lambda: self.closeEvent(None))
-        self.to_clean.append("widget_disconnect_btn")
+        # self.widget_disconnect_btn = widget.QPushButton(self.settings.lang.sw_btn_disconnect)
+        # self.widget_disconnect_btn.clicked.connect(lambda: self.closeEvent(None))
+        # self.to_clean.append("widget_disconnect_btn")
 
         self.widget_filter = widget.QLineEdit()
+        self.widget_filter.setPlaceholderText(self.settings.lang.sw_widget_filter_placeholder)
         self.widget_filter.textChanged.connect(self.filter_table_list)
 
         left_pane = widget.QVBoxLayout()
         left_pane.addWidget(self.widget_filter)
-        left_pane.addWidget(self.widget_schema_box)
         left_pane.addWidget(self.widget_table_list)
-        left_pane.addWidget(self.widget_disconnect_btn)
+        # left_pane.addWidget(self.widget_disconnect_btn)
+        left_pane.addWidget(self.widget_schema_box)
         # endregion
 
         # region right_pane
@@ -180,7 +181,7 @@ class SchemaWindow(widget.QWidget):
         self.widget_tab_holder.setTabsClosable(True)
         self.widget_tab_holder.tabCloseRequested.connect(self.tab_close)
 
-        self.widget_tab_holder.addTab(self.create_tab(default=True), "Пусто")
+        self.widget_tab_holder.addTab(self.create_tab(default=True), self.settings.lang.sw_widget_tab_holder_empty)
         self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
         self.widget_tabs = dict()
 

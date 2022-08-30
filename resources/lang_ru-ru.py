@@ -45,6 +45,9 @@ sw_btn_disconnect = "Отключиться"
 sw_btn_content_tab = "Содержимое"
 sw_btn_schema_tab = "Схема"
 
+sw_widget_filter_placeholder = "Поиск…"
+sw_widget_tab_holder_empty = "Пусто"
+
 sw_tab_statusbar_of = "из"
 sw_tab_statusbar_left = "‹"
 sw_tab_statusbar_right = "›"

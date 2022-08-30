@@ -45,6 +45,9 @@ sw_btn_disconnect = "Disconnect"
 sw_btn_content_tab = "Show content"
 sw_btn_schema_tab = "Show schema"
 
+sw_widget_filter_placeholder = "Filter items…"
+sw_widget_tab_holder_empty = "Empty"
+
 sw_tab_statusbar_of = "of"
 sw_tab_statusbar_left = "<"
 sw_tab_statusbar_right = ">"
