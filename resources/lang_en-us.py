@@ -51,4 +51,12 @@ sw_widget_tab_holder_empty = "Empty"
 sw_tab_statusbar_of = "of"
 sw_tab_statusbar_left = "<"
 sw_tab_statusbar_right = ">"
+sw_widget_switchmeta_data = "Data"
+sw_widget_switchmeta_meta = "Description"
+
+sw_meta_table_param = "param"
+sw_meta_table_type = "type"
+sw_meta_table_nullable = "nullable"
+sw_meta_table_default = "default"
+sw_meta_table_fkey = "foreign key"
 # endregion

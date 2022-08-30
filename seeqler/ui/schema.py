@@ -217,10 +217,31 @@ class SchemaWindow(widget.QWidget):
         # setting new
         self.setLayout(layout)
 
+    # region Events
+
+    def event_disconnect(self):
+        self.interface.disconnect()
+        self.closeEvent(None)
+
+    def event_change_schema(self, idx: int = None):
+        self.widget_table_list.clear()
+        # or can load text via self.widget_schema_box.itemText(idx)
+        self.sql_get_tables_from_schema(self.widget_schema_box.currentText())
+
+    def event_change_table(self, idx: core.QModelIndex):
+        text = self.widget_table_list.item(idx.row()).text()
+
+        if text in getattr(self, "widget_tabs", {}):
+            self.widget_tab_holder.setCurrentWidget(self.widget_tabs[text])
+        else:
+            self.sql_get_table_meta(text)
+
     def filter_table_list(self, text):
         for index in range(self.widget_table_list.count()):
             item = self.widget_table_list.item(index)
             item.setHidden(text not in item.text())
+
+    # endregion
 
     # region Tab GUI
 
@@ -240,13 +261,13 @@ class SchemaWindow(widget.QWidget):
         tab.table.resizeColumnsToContents()
         tab.table.setWordWrap(False)
 
+        # ----
+
         bottom_layout = widget.QHBoxLayout()
 
         tab.statusbar = widget.QLabel()
         tab.statusbar.setText(f"1-? {self.settings.lang.sw_tab_statusbar_of} ?")
         tab.statusbar.setAlignment(core.Qt.AlignmentFlag.AlignCenter)
-
-        bottom_layout.addWidget(tab.statusbar, alignment=core.Qt.AlignmentFlag.AlignCenter)
 
         tab.btn_left = widget.QPushButton()
         tab.btn_left.setText(self.settings.lang.sw_tab_statusbar_left)
@@ -258,10 +279,51 @@ class SchemaWindow(widget.QWidget):
         tab.btn_right.clicked.connect(lambda: self.change_table_page(table_name, 1))
         tab.btn_right.setDisabled(True)
 
+        bottom_layout.addWidget(tab.statusbar, alignment=core.Qt.AlignmentFlag.AlignCenter)
         bottom_layout.insertWidget(0, tab.btn_left, alignment=core.Qt.AlignmentFlag.AlignLeft)
         bottom_layout.addWidget(tab.btn_right, alignment=core.Qt.AlignmentFlag.AlignRight)
 
+        # ----
+
+        headers = [
+            self.settings.lang.sw_meta_table_param,
+            self.settings.lang.sw_meta_table_type,
+            self.settings.lang.sw_meta_table_nullable,
+            self.settings.lang.sw_meta_table_default,
+            self.settings.lang.sw_meta_table_fkey,
+        ]
+        tab.meta_table = widget.QTableWidget()
+        tab.meta_table.setColumnCount(len(headers))
+        tab.meta_table.setHorizontalHeaderLabels(headers)
+        tab.meta_table.setRowCount(len(columns))
+        tab.meta_table.setHidden(True)
+
+        for row, item in enumerate(columns):
+            for col, key in enumerate(("name", "type", "nullable", "default", "fkey")):
+                tab.meta_table.setItem(row, col, widget.QTableWidgetItem(str(item[key])))
+
+        switch_meta_info = widget.QHBoxLayout()
+
+        tab.show_data = widget.QPushButton()
+        tab.show_data.setText(self.settings.lang.sw_widget_switchmeta_data)
+        tab.show_data.setProperty("class", "swButtonSwitch")
+        tab.show_data.setDisabled(True)
+        tab.show_data.clicked.connect(lambda: self.switch_meta_info(table_name, False))
+
+        tab.show_meta = widget.QPushButton()
+        tab.show_meta.setText(self.settings.lang.sw_widget_switchmeta_meta)
+        tab.show_meta.setProperty("class", "swButtonSwitch")
+        tab.show_meta.clicked.connect(lambda: self.switch_meta_info(table_name, True))
+
+        switch_meta_info.addWidget(tab.show_data)
+        switch_meta_info.addWidget(tab.show_meta)
+
+        bottom_layout.addLayout(switch_meta_info)
+
+        # ----
+
         layout.addWidget(tab.table)
+        layout.addWidget(tab.meta_table)
         layout.addLayout(bottom_layout)
         tab.setLayout(layout)
         return tab
@@ -315,6 +377,14 @@ class SchemaWindow(widget.QWidget):
             self.widget_tab_holder.addTab(self.create_tab(default=True), "Пусто")
             self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
 
+    def switch_meta_info(self, table_name: str, show_meta: bool = True):
+        tab = self.widget_tabs.get(table_name)
+
+        tab.table.setHidden(show_meta)
+        tab.show_data.setEnabled(show_meta)
+        tab.meta_table.setVisible(show_meta)
+        tab.show_meta.setDisabled(show_meta)
+
     # endregion
 
     # region Params
@@ -323,27 +393,6 @@ class SchemaWindow(widget.QWidget):
         if not hasattr(self, "widget_schema_box"):
             return None
         return self.widget_schema_box.currentText()
-
-    # endregion
-
-    # region Events
-
-    def event_disconnect(self):
-        self.interface.disconnect()
-        self.closeEvent(None)
-
-    def event_change_schema(self, idx: int = None):
-        self.widget_table_list.clear()
-        # or can load text via self.widget_schema_box.itemText(idx)
-        self.sql_get_tables_from_schema(self.widget_schema_box.currentText())
-
-    def event_change_table(self, idx: core.QModelIndex):
-        text = self.widget_table_list.item(idx.row()).text()
-
-        if text in getattr(self, "widget_tabs", {}):
-            self.widget_tab_holder.setCurrentWidget(self.widget_tabs[text])
-        else:
-            self.sql_get_table_meta(text)
 
     # endregion
 
@@ -512,19 +561,6 @@ class SchemaWindow(widget.QWidget):
         self.widget_tabs[table] = tab
         self.widget_tab_holder.addTab(tab, table)
         self.widget_tab_holder.setCurrentWidget(tab)
-
-        # getting meta info about table:
-        # headers = ["param", "type", "nullable", "default", "foreign key"]
-        # data = []
-        #
-        # foreign_keys = {
-        #     i["constrained_columns"][0]: "{referred_schema}.{referred_table}({referred_columns[0]})".format(**i)
-        #     for i in self.app.seeqler.inspector.get_foreign_keys(table, schema=schema)
-        # }
-        # for item in columns:
-        #     data.append(
-        #         [item["name"], item["type"], item["nullable"], item["default"], foreign_keys.get(item["name"])]
-        #     )
 
         self.sql_get_table_contents(table)
 

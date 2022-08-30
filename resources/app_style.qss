@@ -11,3 +11,7 @@ QLineEdit.error {
 #WidgetTabHolder QTableWidget {
   font-size: 10px;
 }
+
+.swButtonSwitch {
+  width: 20px;
+}

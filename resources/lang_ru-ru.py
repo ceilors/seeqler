@@ -51,4 +51,12 @@ sw_widget_tab_holder_empty = "Пусто"
 sw_tab_statusbar_of = "из"
 sw_tab_statusbar_left = "‹"
 sw_tab_statusbar_right = "›"
+sw_widget_switchmeta_data = "Данные"
+sw_widget_switchmeta_meta = "Описание"
+
+sw_meta_table_param = "параметр"
+sw_meta_table_type = "тип"
+sw_meta_table_nullable = "заnullаемое"
+sw_meta_table_default = "по умолчанию"
+sw_meta_table_fkey = "внешний ключ"
 # endregion

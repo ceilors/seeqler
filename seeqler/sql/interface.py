@@ -91,7 +91,15 @@ class Interface:
 
     @ensure_connected
     def get_table_columns(self, table: str, schema: str | None = None) -> list[dict]:
-        return self.inspector.get_columns(table, schema=schema)
+        cols = self.inspector.get_columns(table, schema=schema)
+        fkeys = {
+            fkey["constrained_columns"][0]: "{referred_schema}.{referred_table}({referred_columns[0]})".format(**fkey)
+            for fkey in self.inspector.get_foreign_keys(table, schema=schema)
+        }
+
+        for col in cols:
+            col["fkey"] = fkeys.get(col["name"])
+        return cols
 
     @ensure_connected
     def get_table_data(self, table: str, limit: int, offset: int):
