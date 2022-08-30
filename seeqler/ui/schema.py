@@ -164,7 +164,11 @@ class SchemaWindow(widget.QWidget):
         self.widget_disconnect_btn.clicked.connect(lambda: self.closeEvent(None))
         self.to_clean.append("widget_disconnect_btn")
 
+        self.widget_filter = widget.QLineEdit()
+        self.widget_filter.textChanged.connect(self.filter_table_list)
+
         left_pane = widget.QVBoxLayout()
+        left_pane.addWidget(self.widget_filter)
         left_pane.addWidget(self.widget_schema_box)
         left_pane.addWidget(self.widget_table_list)
         left_pane.addWidget(self.widget_disconnect_btn)
@@ -211,6 +215,11 @@ class SchemaWindow(widget.QWidget):
 
         # setting new
         self.setLayout(layout)
+
+    def filter_table_list(self, text):
+        for index in range(self.widget_table_list.count()):
+            item = self.widget_table_list.item(index)
+            item.setHidden(text not in item.text())
 
     # region Tab GUI
 
