@@ -31,6 +31,9 @@ def get_app(settings):
     with open(settings.resources_path / "app_style.qss", "r") as qss:
         app.setStyleSheet(qss.read())
 
+    screen_size = app.primaryScreen().size()
+    settings.screen_width, settings.screen_height = screen_size.width(), screen_size.height()
+
     window = MainWindow(settings)
 
     return app, window

@@ -1,5 +1,6 @@
 * {
   font-family: "Fira Mono", "system-ui";
+  font-size: 12px;
 }
 
 QLineEdit.error {
@@ -7,8 +8,6 @@ QLineEdit.error {
   border: 1px solid red;
 }
 
-#WidgetTabHolder QTabBar::close-button {
-}
-
-#WidgetTabHolder::tab-bar::close-button:hover {
+#WidgetTabHolder QTableWidget {
+  font-size: 10px;
 }

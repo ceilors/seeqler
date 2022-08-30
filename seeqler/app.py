@@ -2,7 +2,7 @@ from pathlib import Path
 
 from .common.types import Descriptor
 from .ui.language import Language
-from .ui.main import get_app
+from .ui.app import get_app
 
 
 RESOURCES_PATH = Path(__file__).parents[1] / "resources"

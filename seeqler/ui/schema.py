@@ -111,7 +111,7 @@ class SchemaWindow(widget.QWidget):
         self.settings = settings
         self.set_defaults()
 
-        self.resize(core.QSize(800, 500))
+        self.resize(core.QSize(int(settings.screen_width * 0.65), int(settings.screen_height * 0.65)))
         layout = widget.QHBoxLayout()
         layout.addWidget(self._get_loader())
         self.setLayout(layout)
@@ -227,6 +227,8 @@ class SchemaWindow(widget.QWidget):
         tab.table.setColumnCount(len(columns))
         tab.table.setHorizontalHeaderLabels(x["name"] for x in columns)
         tab.table.setRowCount(5)  # default row count until table is filled up
+        tab.table.resizeColumnsToContents()
+        tab.table.setWordWrap(False)
 
         bottom_layout = widget.QHBoxLayout()
 
@@ -270,12 +272,15 @@ class SchemaWindow(widget.QWidget):
                 content = widget.QTableWidgetItem(str(cell))
                 tab.table.setItem(row, col, content)
 
-        tab.statusbar.setText(f"{tab.offset + 1}-{current_rows} {self.settings.lang.sw_tab_statusbar_of} {row_number}")
-
         methods = {True: "setEnabled", False: "setDisabled"}
 
         getattr(tab.btn_left, methods[tab.offset >= self.settings.rows_per_page])(True)
         getattr(tab.btn_right, methods[current_rows != row_number])(True)
+
+        tab.statusbar.setText(f"{tab.offset + 1}-{current_rows} {self.settings.lang.sw_tab_statusbar_of} {row_number}")
+
+        if row_number == 0:
+            tab.statusbar.setText(f"0 {self.settings.lang.sw_tab_statusbar_of} 0")
 
     def change_table_page(self, table_name: str, sign: int):
         tab = self.widget_tabs[table_name]
