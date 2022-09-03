@@ -47,16 +47,26 @@ sw_btn_schema_tab = "Show schema"
 
 sw_widget_filter_placeholder = "Filter items…"
 sw_widget_tab_holder_empty = "Empty"
+# endregion
 
-sw_tab_statusbar_of = "of"
-sw_tab_statusbar_left = "<"
-sw_tab_statusbar_right = ">"
-sw_widget_switchmeta_data = "Data"
-sw_widget_switchmeta_meta = "Description"
+# region ui/custom/qseeqlertab.py
+qst_statusbar_of = "of"
+qst_statusbar_left = "<"
+qst_statusbar_right = ">"
+qst_switchview_data = "Data"
+qst_switchview_meta = "Description"
 
-sw_meta_table_param = "param"
-sw_meta_table_type = "type"
-sw_meta_table_nullable = "nullable"
-sw_meta_table_default = "default"
-sw_meta_table_fkey = "foreign key"
+qst_btn_config = "⚙️"
+# qst_btn_edit_columns
+qst_btn_edit_limit = "Change selection limit"
+qst_inp_edit_limit = "Change selection limit"
+qst_lbl_edit_limit = "Load data from table by … rows"
+qst_inp_edit_limit_ok = "Apply"
+qst_inp_edit_limit_cancel = "Cancel"
+
+qst_meta_table_param = "param"
+qst_meta_table_type = "type"
+qst_meta_table_nullable = "nullable"
+qst_meta_table_default = "default"
+qst_meta_table_fkey = "foreign key"
 # endregion

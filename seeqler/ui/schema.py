@@ -4,6 +4,7 @@ import PyQt6.QtCore as core
 import PyQt6.QtGui as gui
 import PyQt6.QtWidgets as widget
 
+from .custom import QSeeqlerTab
 from .utils import clear_layout
 from ..sql.interface import Interface
 
@@ -183,7 +184,7 @@ class SchemaWindow(widget.QWidget):
 
         self.widget_tab_holder.addTab(self.create_tab(default=True), self.settings.lang.sw_widget_tab_holder_empty)
         self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
-        self.widget_tabs = dict()
+        self.widget_tabs: dict[str, QSeeqlerTab] = dict()
 
         self.to_clean.extend(("widget_tab_holder", "widget_tabs"))
 
@@ -249,116 +250,12 @@ class SchemaWindow(widget.QWidget):
         if default or columns is None or table_name is None:
             return self.get_default_tab_widget()
 
-        tab = widget.QWidget()
-        layout = widget.QVBoxLayout()
-
-        tab.offset = 0  # offset of table data
-
-        tab.table = widget.QTableWidget()
-        tab.table.setColumnCount(len(columns))
-        tab.table.setHorizontalHeaderLabels(x["name"] for x in columns)
-        tab.table.setRowCount(5)  # default row count until table is filled up
-        tab.table.resizeColumnsToContents()
-        tab.table.setWordWrap(False)
-
-        # ----
-
-        bottom_layout = widget.QHBoxLayout()
-
-        tab.statusbar = widget.QLabel()
-        tab.statusbar.setText(f"1-? {self.settings.lang.sw_tab_statusbar_of} ?")
-        tab.statusbar.setAlignment(core.Qt.AlignmentFlag.AlignCenter)
-
-        tab.btn_left = widget.QPushButton()
-        tab.btn_left.setText(self.settings.lang.sw_tab_statusbar_left)
-        tab.btn_left.clicked.connect(lambda: self.change_table_page(table_name, -1))
-        tab.btn_left.setDisabled(True)
-
-        tab.btn_right = widget.QPushButton()
-        tab.btn_right.setText(self.settings.lang.sw_tab_statusbar_right)
-        tab.btn_right.clicked.connect(lambda: self.change_table_page(table_name, 1))
-        tab.btn_right.setDisabled(True)
-
-        bottom_layout.addWidget(tab.statusbar, alignment=core.Qt.AlignmentFlag.AlignCenter)
-        bottom_layout.insertWidget(0, tab.btn_left, alignment=core.Qt.AlignmentFlag.AlignLeft)
-        bottom_layout.addWidget(tab.btn_right, alignment=core.Qt.AlignmentFlag.AlignRight)
-
-        # ----
-
-        headers = [
-            self.settings.lang.sw_meta_table_param,
-            self.settings.lang.sw_meta_table_type,
-            self.settings.lang.sw_meta_table_nullable,
-            self.settings.lang.sw_meta_table_default,
-            self.settings.lang.sw_meta_table_fkey,
-        ]
-        tab.meta_table = widget.QTableWidget()
-        tab.meta_table.setColumnCount(len(headers))
-        tab.meta_table.setHorizontalHeaderLabels(headers)
-        tab.meta_table.setRowCount(len(columns))
-        tab.meta_table.setHidden(True)
-
-        for row, item in enumerate(columns):
-            for col, key in enumerate(("name", "type", "nullable", "default", "fkey")):
-                tab.meta_table.setItem(row, col, widget.QTableWidgetItem(str(item[key])))
-
-        switch_meta_info = widget.QHBoxLayout()
-
-        tab.show_data = widget.QPushButton()
-        tab.show_data.setText(self.settings.lang.sw_widget_switchmeta_data)
-        tab.show_data.setProperty("class", "swButtonSwitch")
-        tab.show_data.setDisabled(True)
-        tab.show_data.clicked.connect(lambda: self.switch_meta_info(table_name, False))
-
-        tab.show_meta = widget.QPushButton()
-        tab.show_meta.setText(self.settings.lang.sw_widget_switchmeta_meta)
-        tab.show_meta.setProperty("class", "swButtonSwitch")
-        tab.show_meta.clicked.connect(lambda: self.switch_meta_info(table_name, True))
-
-        switch_meta_info.addWidget(tab.show_data)
-        switch_meta_info.addWidget(tab.show_meta)
-
-        bottom_layout.addLayout(switch_meta_info)
-
-        # ----
-
-        layout.addWidget(tab.table)
-        layout.addWidget(tab.meta_table)
-        layout.addLayout(bottom_layout)
-        tab.setLayout(layout)
+        tab = QSeeqlerTab(table_name, columns, self)
         return tab
 
     def fillup_table(self, table_name: str, data: list[list[Any]]):
         tab = self.widget_tabs[table_name]
-
-        contents = data["contents"]
-        row_number = data["rows"]
-        table_rows = len(contents)
-        current_rows = tab.offset + table_rows
-
-        tab.table.setRowCount(table_rows)
-        tab.table.scrollToTop()
-
-        for row, data_row in enumerate(contents):
-            for col, cell in enumerate(data_row):
-                content = widget.QTableWidgetItem(str(cell))
-                tab.table.setItem(row, col, content)
-
-        methods = {True: "setEnabled", False: "setDisabled"}
-
-        getattr(tab.btn_left, methods[tab.offset >= self.settings.rows_per_page])(True)
-        getattr(tab.btn_right, methods[current_rows != row_number])(True)
-
-        tab.statusbar.setText(f"{tab.offset + 1}-{current_rows} {self.settings.lang.sw_tab_statusbar_of} {row_number}")
-
-        if row_number == 0:
-            tab.statusbar.setText(f"0 {self.settings.lang.sw_tab_statusbar_of} 0")
-
-    def change_table_page(self, table_name: str, sign: int):
-        tab = self.widget_tabs[table_name]
-
-        tab.offset += sign * self.settings.rows_per_page
-        self.sql_get_table_contents(table_name, tab.offset)
+        tab.fillup_table(data)
 
     def get_default_tab_widget(self):
         tab = widget.QWidget()
@@ -376,14 +273,6 @@ class SchemaWindow(widget.QWidget):
         if not self.widget_tabs:
             self.widget_tab_holder.addTab(self.create_tab(default=True), "Пусто")
             self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
-
-    def switch_meta_info(self, table_name: str, show_meta: bool = True):
-        tab = self.widget_tabs.get(table_name)
-
-        tab.table.setHidden(show_meta)
-        tab.show_data.setEnabled(show_meta)
-        tab.meta_table.setVisible(show_meta)
-        tab.show_meta.setDisabled(show_meta)
 
     # endregion
 
@@ -555,21 +444,21 @@ class SchemaWindow(widget.QWidget):
 
         if not getattr(self, "widget_tabs", None):
             self.widget_tab_holder.removeTab(0)
-            self.widget_tabs = dict()
+            self.widget_tabs: dict[str, QSeeqlerTab] = dict()
 
         tab = self.create_tab(table, columns)
         self.widget_tabs[table] = tab
         self.widget_tab_holder.addTab(tab, table)
         self.widget_tab_holder.setCurrentWidget(tab)
 
-        self.sql_get_table_contents(table)
+        self.sql_get_table_contents(table, tab.config.offset, tab.config.limit, tab.config.get_select())
 
     # -----
 
-    def sql_get_table_contents(self, name, offset: int = 0):
+    def sql_get_table_contents(self, name, offset: int = 0, limit: int = 100, select: str = "*"):
         self.run_parallel_task(
             method=self.interface.get_table_data,
-            method_kwargs={"table": name, "offset": offset, "limit": self.settings.rows_per_page},
+            method_kwargs={"table": name, "offset": offset, "limit": limit, "select": select},
             at_end=self.sql_get_table_contents_after,
             extra_data={"name": name},
         )

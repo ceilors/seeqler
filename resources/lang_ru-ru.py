@@ -47,16 +47,26 @@ sw_btn_schema_tab = "Схема"
 
 sw_widget_filter_placeholder = "Поиск…"
 sw_widget_tab_holder_empty = "Пусто"
+# endregion
 
-sw_tab_statusbar_of = "из"
-sw_tab_statusbar_left = "‹"
-sw_tab_statusbar_right = "›"
-sw_widget_switchmeta_data = "Данные"
-sw_widget_switchmeta_meta = "Описание"
+# region ui/custom/qseeqlertab.py
+qst_statusbar_of = "из"
+qst_statusbar_left = "‹"
+qst_statusbar_right = "›"
+qst_switchview_data = "Данные"
+qst_switchview_meta = "Описание"
 
-sw_meta_table_param = "параметр"
-sw_meta_table_type = "тип"
-sw_meta_table_nullable = "заnullаемое"
-sw_meta_table_default = "по умолчанию"
-sw_meta_table_fkey = "внешний ключ"
+qst_btn_config = "⚙️"
+# qst_btn_edit_columns
+qst_btn_edit_limit = "Изменить лимит выгрузки"
+qst_inp_edit_limit = "Изменить лимит выгрузки"
+qst_lbl_edit_limit = "Загружать данные по … строк"
+qst_inp_edit_limit_ok = "Применить"
+qst_inp_edit_limit_cancel = "Отмена"
+
+qst_meta_table_param = "параметр"
+qst_meta_table_type = "тип"
+qst_meta_table_nullable = "заnullаемое"
+qst_meta_table_default = "по умолчанию"
+qst_meta_table_fkey = "внешний ключ"
 # endregion

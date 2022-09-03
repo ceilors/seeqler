@@ -75,8 +75,6 @@ class Interface:
         self.inspector = self._impl.inspector
         self.connected = True
 
-        return None
-
     @ensure_connected
     def disconnect(self):
         self._impl.disconnect()
@@ -102,7 +100,7 @@ class Interface:
         return cols
 
     @ensure_connected
-    def get_table_data(self, table: str, limit: int, offset: int):
-        data = self.select(from_=table, limit=limit, offset=offset)
+    def get_table_data(self, table: str, limit: int, offset: int, select: str):
+        data = self.select(what=select, from_=table, limit=limit, offset=offset)
         rows: int = self.select(what="count(*) ", from_=table)[0][0]
         return {"contents": data, "rows": rows}
