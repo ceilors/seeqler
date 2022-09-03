@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 
 
 DEFAULT_ROW_COUNT = 5  # default row count until table is filled up
+STATUSBAR_HEIGHT = 25  # QSeeqlerTab bottom_layout QSpacerItem height
 
 
 class TabConfig:
@@ -100,31 +101,6 @@ class TabInputDialog(widget.QInputDialog):
 
 
 class QSeeqlerTab(widget.QWidget):
-    """
-    ...
-
-    Lang constants:
-        - qst_statusbar_of
-        - qst_statusbar_left
-        - qst_statusbar_right
-        - qst_meta_table_param
-        - qst_meta_table_type
-        - qst_meta_table_nullable
-        - qst_meta_table_default
-        - qst_meta_table_fkey
-        - qst_switchview_data
-        - qst_switchview_meta
-        - qst_btn_config
-        - qst_btn_edit_columns
-        - qst_inp_edit_columns
-        - qst_lbl_edit_columns
-        - qst_btn_edit_limit
-        - qst_inp_edit_limit
-        - qst_lbl_edit_limit
-        - qst_inp_ok
-        - qst_inp_cancel
-    """
-
     def __init__(self, table_name: str, columns: list[dict], parent_window: "SchemaWindow", *args, **kwargs):
         super().__init__(*args, **kwargs)
         layout = widget.QVBoxLayout()
@@ -137,6 +113,9 @@ class QSeeqlerTab(widget.QWidget):
         self.prepare_table()
         self.table.setWordWrap(False)
 
+        retain_place = widget.QSizePolicy()
+        retain_place.setRetainSizeWhenHidden(True)
+
         # ----
 
         bottom_layout = widget.QHBoxLayout()
@@ -144,16 +123,19 @@ class QSeeqlerTab(widget.QWidget):
         self.statusbar = widget.QLabel()
         self.statusbar.setText(f"1-? {self.settings.lang.qst_statusbar_of} ?")
         self.statusbar.setAlignment(core.Qt.AlignmentFlag.AlignCenter)
+        self.statusbar.setSizePolicy(retain_place)
 
         self.btn_left = widget.QPushButton()
         self.btn_left.setText(self.settings.lang.qst_statusbar_left)
         self.btn_left.clicked.connect(lambda: self.change_table_page(-1))
         self.btn_left.setDisabled(True)
+        self.btn_left.setSizePolicy(retain_place)
 
         self.btn_right = widget.QPushButton()
         self.btn_right.setText(self.settings.lang.qst_statusbar_right)
         self.btn_right.clicked.connect(lambda: self.change_table_page(1))
         self.btn_right.setDisabled(True)
+        self.btn_right.setSizePolicy(retain_place)
 
         bottom_layout.addWidget(self.statusbar, alignment=core.Qt.AlignmentFlag.AlignCenter)
         bottom_layout.insertWidget(0, self.btn_left, alignment=core.Qt.AlignmentFlag.AlignLeft)
@@ -185,13 +167,16 @@ class QSeeqlerTab(widget.QWidget):
         self.show_data.setProperty("class", "swButtonSwitch")
         self.show_data.setDisabled(True)
         self.show_data.clicked.connect(lambda: self.switch_meta_info(False))
+        self.show_data.setSizePolicy(retain_place)
 
         self.show_meta = widget.QPushButton()
         self.show_meta.setText(self.settings.lang.qst_switchview_meta)
         self.show_meta.setProperty("class", "swButtonSwitch")
         self.show_meta.clicked.connect(lambda: self.switch_meta_info(True))
+        self.show_meta.setSizePolicy(retain_place)
 
         self.edit_config = widget.QPushButton(self.settings.lang.qst_btn_config)
+        self.edit_config.setSizePolicy(retain_place)
 
         menu = widget.QMenu()
 
@@ -210,6 +195,7 @@ class QSeeqlerTab(widget.QWidget):
         config_layout.addWidget(self.show_meta)
 
         bottom_layout.addLayout(config_layout)
+        bottom_layout.addSpacerItem(widget.QSpacerItem(0, 25, hPolicy=widget.QSizePolicy.Policy.Ignored))
 
         # ----
 
@@ -262,6 +248,10 @@ class QSeeqlerTab(widget.QWidget):
         self.show_data.setEnabled(show_meta)
         self.meta_table.setVisible(show_meta)
         self.show_meta.setDisabled(show_meta)
+        self.statusbar.setHidden(show_meta)
+        self.btn_left.setHidden(show_meta)
+        self.btn_right.setHidden(show_meta)
+        self.edit_config.setHidden(show_meta)
 
     def config_menu_change_columns(self):
         value, ok = TabInputDialog.getColumns(self, self.settings.lang, value=self.config.get_column_items())
