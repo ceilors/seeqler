@@ -1,8 +1,8 @@
 from typing import TYPE_CHECKING, Any
 
-from PyQt6 import QtCore as core
-from PyQt6 import QtGui as gui
-from PyQt6 import QtWidgets as widget
+from PyQt6 import QtCore as core, QtGui as gui, QtWidgets as widget
+
+from .qchecklist import QCheckList
 
 if TYPE_CHECKING:
     from ..schema import SchemaWindow
@@ -19,6 +19,9 @@ class TabConfig:
         self.columns_default = columns
         self.columns = columns
 
+    def get_column_items(self):
+        return [(x in self.columns, x) for x in self.columns_default]
+
     def get_select(self):
         if self.columns == self.columns_default:
             return "*"
@@ -30,8 +33,8 @@ class TabInputDialog(widget.QInputDialog):
     def getInteger(
         parent: widget.QWidget, lang, value: int = 0, min: int = 1, max: int = 2**31 - 1
     ) -> tuple[int, bool]:
-        inp = widget.QInputDialog(parent)
-        inp.setInputMode(widget.QInputDialog.InputMode.IntInput)
+        inp = TabInputDialog(parent)
+        inp.setInputMode(TabInputDialog.InputMode.IntInput)
         inp.setFixedSize(400, 200)
 
         inp.setWindowTitle(lang.qst_inp_edit_limit)
@@ -41,16 +44,59 @@ class TabInputDialog(widget.QInputDialog):
         inp.setIntValue(value)
         inp.setIntStep(1)
 
-        inp.setOkButtonText(lang.qst_inp_edit_limit_ok)
-        inp.setCancelButtonText(lang.qst_inp_edit_limit_cancel)
+        inp.setOkButtonText(lang.qst_inp_ok)
+        inp.setCancelButtonText(lang.qst_inp_cancel)
 
-        if inp.exec() == widget.QInputDialog.DialogCode.Accepted:
+        if inp.exec() == TabInputDialog.DialogCode.Accepted:
             result = (inp.intValue(), True)
         else:
-            result = (inp.intValue(), False)
+            result = (value, False)
 
         inp.deleteLater()
         return result
+
+    @staticmethod
+    def getColumns(parent: widget.QWidget, lang, value: list[tuple[bool, str]]) -> list[tuple[bool, str]]:
+        dialog = TabInputDialog().ColumnDialog(parent, lang, value)
+        if dialog.exec() == TabInputDialog.DialogCode.Accepted:
+            result = (dialog.getColumnValue(), True)
+        else:
+            result = (value, False)
+
+        dialog.deleteLater()
+        return result
+
+    def ColumnDialog(self, parent: widget.QWidget, lang, value: list[tuple[bool, str]]) -> widget.QDialog:
+        inp = widget.QDialog(parent)
+        inp.setParent(parent)
+        inp.setWindowTitle(lang.qst_inp_edit_columns)
+        inp.setFixedSize(400, 500)
+
+        label = widget.QLabel(lang.qst_lbl_edit_columns)
+        table = QCheckList(value, show_header=lang.qst_hdr_edit_columns, movable=True)
+
+        setattr(inp, "getColumnValue", lambda: table.getValue())
+
+        input_layout = widget.QVBoxLayout()
+        input_layout.addWidget(label)
+        input_layout.addWidget(table)
+
+        ok_btn = widget.QPushButton(lang.qst_inp_ok)
+        ok_btn.clicked.connect(inp.accept)
+        cancel_btn = widget.QPushButton(lang.qst_inp_cancel)
+        cancel_btn.clicked.connect(inp.reject)
+
+        btn_layout = widget.QHBoxLayout()
+        btn_layout.addStretch()
+        btn_layout.addWidget(ok_btn)
+        btn_layout.addWidget(cancel_btn)
+
+        layout = widget.QVBoxLayout()
+        layout.addLayout(input_layout)
+        layout.addLayout(btn_layout)
+
+        inp.setLayout(layout)
+        return inp
 
 
 class QSeeqlerTab(widget.QWidget):
@@ -70,11 +116,13 @@ class QSeeqlerTab(widget.QWidget):
         - qst_switchview_meta
         - qst_btn_config
         - qst_btn_edit_columns
+        - qst_inp_edit_columns
+        - qst_lbl_edit_columns
         - qst_btn_edit_limit
         - qst_inp_edit_limit
         - qst_lbl_edit_limit
-        - qst_inp_edit_limit_ok
-        - qst_inp_edit_limit_cancel
+        - qst_inp_ok
+        - qst_inp_cancel
     """
 
     def __init__(self, table_name: str, columns: list[dict], parent_window: "SchemaWindow", *args, **kwargs):
@@ -86,10 +134,7 @@ class QSeeqlerTab(widget.QWidget):
         self.config = TabConfig(table_name, 0, self.settings.rows_per_page, [x["name"] for x in columns])
 
         self.table = widget.QTableWidget()
-        self.table.setColumnCount(len(columns))
-        self.table.setHorizontalHeaderLabels(self.config.columns)
-        self.table.setRowCount(DEFAULT_ROW_COUNT)
-        self.table.resizeColumnsToContents()
+        self.prepare_table()
         self.table.setWordWrap(False)
 
         # ----
@@ -173,6 +218,13 @@ class QSeeqlerTab(widget.QWidget):
         layout.addLayout(bottom_layout)
         self.setLayout(layout)
 
+    def prepare_table(self):
+        self.table.setColumnCount(len(self.config.columns))
+        self.table.setHorizontalHeaderLabels(self.config.columns)
+        self.table.setRowCount(0)
+        self.table.setRowCount(DEFAULT_ROW_COUNT)
+        self.table.resizeColumnsToContents()
+
     def fillup_table(self, data: list[list[Any]]):
         contents = data["contents"]
         row_number = data["rows"]
@@ -212,7 +264,13 @@ class QSeeqlerTab(widget.QWidget):
         self.show_meta.setDisabled(show_meta)
 
     def config_menu_change_columns(self):
-        ...
+        value, ok = TabInputDialog.getColumns(self, self.settings.lang, value=self.config.get_column_items())
+        if ok:
+            self.config.columns = [x[1] for x in value if x[0]]
+            self.prepare_table()
+            self.daddy.sql_get_table_contents(
+                self.config.table_name, self.config.offset, self.config.limit, self.config.get_select()
+            )
 
     def config_menu_change_limit(self):
         value, ok = TabInputDialog.getInteger(self, self.settings.lang, value=self.config.limit)

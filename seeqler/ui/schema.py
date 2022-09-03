@@ -1,17 +1,14 @@
 from typing import TYPE_CHECKING, Callable, Iterable, Any
 
-import PyQt6.QtCore as core
-import PyQt6.QtGui as gui
-import PyQt6.QtWidgets as widget
-
 from .custom import QSeeqlerTab
 from .utils import clear_layout
 from ..sql.interface import Interface
 
+from inspect import signature
+from PyQt6 import QtCore as core, QtGui as gui, QtWidgets as widget
+
 if TYPE_CHECKING:
     from ..common.connection_manager import Connection
-
-from inspect import signature
 
 
 BTN_AT_RIGHT = widget.QTabBar.ButtonPosition.RightSide
