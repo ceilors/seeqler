@@ -26,6 +26,8 @@ class TabConfig:
     def get_select(self):
         if self.columns == self.columns_default:
             return "*"
+        if not self.columns:
+            return "''"
         return ", ".join(f'"{x}"' for x in self.columns)
 
 
