@@ -25,9 +25,9 @@ class QCheckList(widget.QWidget):
 
         model: "CheckableModel" = self.listview.model()
 
-        state, row_count = 0, model.rowCount()
-        for row in range(row_count):
-            state += int(model.item(row, 0).checkState() == core.Qt.CheckState.Checked)
+        row_count = model.rowCount()
+        state = sum(int(model.item(row, 0).checkState() == core.Qt.CheckState.Checked) for row in range(row_count))
+
         self.checkbox.setCheckState(
             core.Qt.CheckState.Unchecked
             if state == 0
