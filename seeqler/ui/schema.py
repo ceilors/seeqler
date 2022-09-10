@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Callable, Iterable, Any
 
-from .custom import QSeeqlerTab
+from .custom import SeeqlerTab
 from .utils import clear_layout
 from ..sql.interface import Interface
 
@@ -83,6 +83,8 @@ class SchemaWindow(widget.QWidget):
     _query, _executing_query = [], False
     to_clean = []
 
+    # region initial
+
     @property
     def state(self):
         return self._state
@@ -144,6 +146,8 @@ class SchemaWindow(widget.QWidget):
             raise RuntimeError("Set up connection first!")
         super().show(*args, **kwargs)
 
+    # endregion
+
     def show_table_layout(self):
         # region left_pane
         self.widget_schema_box = widget.QComboBox()
@@ -181,7 +185,7 @@ class SchemaWindow(widget.QWidget):
 
         self.widget_tab_holder.addTab(self.create_tab(default=True), self.settings.lang.sw_widget_tab_holder_empty)
         self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
-        self.widget_tabs: dict[str, QSeeqlerTab] = dict()
+        self.widget_tabs: dict[str, SeeqlerTab] = dict()
 
         self.to_clean.extend(("widget_tab_holder", "widget_tabs"))
 
@@ -247,7 +251,7 @@ class SchemaWindow(widget.QWidget):
         if default or columns is None or table_name is None:
             return self.get_default_tab_widget()
 
-        tab = QSeeqlerTab(table_name, columns, self)
+        tab = SeeqlerTab(self, table_name, columns)
         return tab
 
     def fillup_table(self, table_name: str, data: list[list[Any]]):
@@ -271,7 +275,7 @@ class SchemaWindow(widget.QWidget):
             self.widget_tab_holder.addTab(self.create_tab(default=True), "Пусто")
             self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
 
-    # endregion
+    # endregiond
 
     # region Params
 
@@ -441,14 +445,14 @@ class SchemaWindow(widget.QWidget):
 
         if not getattr(self, "widget_tabs", None):
             self.widget_tab_holder.removeTab(0)
-            self.widget_tabs: dict[str, QSeeqlerTab] = dict()
+            self.widget_tabs: dict[str, SeeqlerTab] = dict()
 
         tab = self.create_tab(table, columns)
         self.widget_tabs[table] = tab
         self.widget_tab_holder.addTab(tab, table)
         self.widget_tab_holder.setCurrentWidget(tab)
 
-        self.sql_get_table_contents(table, tab.config.offset, tab.config.limit, tab.config.get_select())
+        tab.load_table_contents()
 
     # -----
 

@@ -1,13 +1,13 @@
 from PyQt6 import QtCore as core, QtGui as gui, QtWidgets as widget
 
 
-class QCheckList(widget.QWidget):
+class CheckList(widget.QWidget):
     def __init__(
         self, items: list[tuple[bool, str]], show_header: str | None = None, movable: bool = False, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
-        self.listview = QCheckListView(self, items, movable)
+        self.listview = CheckListView(self, items, movable)
         layout = widget.QVBoxLayout()
 
         if show_header is not None:
@@ -41,7 +41,7 @@ class QCheckList(widget.QWidget):
 
 
 class CheckableModel(gui.QStandardItemModel):
-    def __init__(self, listview: "QCheckListView", items: list[tuple[bool, str]], movable: bool, *args, **kwargs):
+    def __init__(self, listview: "CheckListView", items: list[tuple[bool, str]], movable: bool, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setParent(listview)
 
@@ -56,8 +56,8 @@ class CheckableModel(gui.QStandardItemModel):
             self.item(row, 0).setCheckState(core.Qt.CheckState.Checked if value else core.Qt.CheckState.Unchecked)
 
 
-class QCheckListView(widget.QListView):
-    def __init__(self, parent: "QCheckList", items: list[tuple[bool, str]], movable: bool, *args, **kwargs):
+class CheckListView(widget.QListView):
+    def __init__(self, parent: "CheckList", items: list[tuple[bool, str]], movable: bool, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setParent(parent)
 

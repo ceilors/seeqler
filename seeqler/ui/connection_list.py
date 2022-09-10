@@ -2,7 +2,7 @@ import PyQt6.QtCore as core
 import PyQt6.QtGui as gui
 import PyQt6.QtWidgets as widget
 
-from .custom import QLineEdit
+from .custom import ErrorLineEdit
 from ..common.connection_manager import Connection, ConnectionManager
 
 
@@ -88,8 +88,8 @@ class NewConnection(widget.QDialog):
         self.setWindowModality(core.Qt.WindowModality.ApplicationModal)
         self.resize(core.QSize(300, 180))
 
-        self.conn_name = QLineEdit()
-        self.conn_string = QLineEdit()
+        self.conn_name = ErrorLineEdit()
+        self.conn_string = ErrorLineEdit()
 
         self.button_add = widget.QPushButton(self.settings.lang.cl_btn_create)
         self.button_add.clicked.connect(self.add_new_item)

@@ -1,8 +1,9 @@
-from pathlib import Path
-
-from .common.types import Descriptor
+from .common.connection_manager import Connection, ConnectionManager
+from .common.language import Language
+from .settings import Settings
 from .ui.app import get_app
-from .ui.language import Language
+
+from pathlib import Path
 
 
 RESOURCES_PATH = Path(__file__).parents[1] / "resources"
@@ -11,15 +12,9 @@ LANGUAGE = "RU-RU"  # TODO: replace with preferences
 
 class Seeqler:
     def __init__(self, connection_string: str | None = None):
-        self.settings = Descriptor()
-        self.settings.lang = Language(LANGUAGE)
-        self.settings.resources_path = RESOURCES_PATH
-        self.settings.rows_per_page = 100
-        self.settings.connection = None
+        self.settings = Settings(Language(LANGUAGE), RESOURCES_PATH)
 
         if connection_string:
-            from .common.connection_manager import Connection, ConnectionManager
-
             try:
                 self.settings.connection = ConnectionManager().get(connection_string=connection_string)
             except (ValueError, AttributeError):

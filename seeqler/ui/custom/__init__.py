@@ -1,3 +1,3 @@
-from .qchecklist import QCheckList
-from .qlineedit import QLineEdit
-from .qseeqlertab import QSeeqlerTab, TabConfig
+from .checklist import CheckList
+from .errorlineedit import ErrorLineEdit
+from .seeqlertab import SeeqlerTab

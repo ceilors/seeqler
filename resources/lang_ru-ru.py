@@ -49,7 +49,7 @@ sw_widget_filter_placeholder = "Поиск…"
 sw_widget_tab_holder_empty = "Пусто"
 # endregion
 
-# region ui/custom/qseeqlertab.py
+# region ui/custom/seeqlertab.py
 qst_statusbar_of = "из"
 qst_statusbar_left = "‹"
 qst_statusbar_right = "›"
@@ -66,10 +66,4 @@ qst_inp_edit_limit = "Изменить лимит выгрузки"
 qst_lbl_edit_limit = "Загружать данные по … строк"
 qst_inp_ok = "Применить"
 qst_inp_cancel = "Отмена"
-
-qst_meta_table_param = "параметр"
-qst_meta_table_type = "тип"
-qst_meta_table_nullable = "заnullаемое"
-qst_meta_table_default = "по умолчанию"
-qst_meta_table_fkey = "внешний ключ"
 # endregion

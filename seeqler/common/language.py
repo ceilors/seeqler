@@ -1,7 +1,9 @@
+from .types import SingletonMeta
+
 import importlib
 
 
-class Language:
+class Language(metaclass=SingletonMeta):
     def __init__(self, lang: str):
         self.lang = lang
         self.errors = ""

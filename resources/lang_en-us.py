@@ -49,7 +49,7 @@ sw_widget_filter_placeholder = "Filter items…"
 sw_widget_tab_holder_empty = "Empty"
 # endregion
 
-# region ui/custom/qseeqlertab.py
+# region ui/custom/seeqlertab.py
 qst_statusbar_of = "of"
 qst_statusbar_left = "<"
 qst_statusbar_right = ">"
@@ -66,10 +66,4 @@ qst_inp_edit_limit = "Change selection limit"
 qst_lbl_edit_limit = "Load data from table by … rows"
 qst_inp_ok = "Apply"
 qst_inp_cancel = "Cancel"
-
-qst_meta_table_param = "param"
-qst_meta_table_type = "type"
-qst_meta_table_nullable = "nullable"
-qst_meta_table_default = "default"
-qst_meta_table_fkey = "foreign key"
 # endregion

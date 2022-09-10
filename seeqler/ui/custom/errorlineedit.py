@@ -2,7 +2,7 @@ import PyQt6.QtCore as core
 import PyQt6.QtWidgets as widget
 
 
-class QLineEdit(widget.QLineEdit):
+class ErrorLineEdit(widget.QLineEdit):
     keyPressed = core.pyqtSignal(int)
 
     def keyPressEvent(self, event):

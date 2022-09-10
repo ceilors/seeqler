@@ -3,14 +3,15 @@ import PyQt6.QtWidgets as widget
 
 from .connection_list import ConnectionListWindow
 from .schema import SchemaWindow
-from ..common.types import Descriptor
+
+from types import SimpleNamespace
 
 
 class MainWindow(widget.QMainWindow):
     def __init__(self, settings):
         super().__init__()
 
-        self.windows = Descriptor()
+        self.windows = SimpleNamespace()
         self.windows.connection_manager = ConnectionListWindow(self, settings)
         self.windows.schema_window = SchemaWindow(self, settings)
 
