@@ -47,6 +47,7 @@ sw_btn_schema_tab = "Схема"
 
 sw_widget_filter_placeholder = "Поиск…"
 sw_widget_tab_holder_empty = "Пусто"
+sw_widget_tab_holder_raw = "SQL"
 # endregion
 
 # region ui/custom/seeqlertab.py
@@ -66,4 +67,9 @@ qst_inp_edit_limit = "Изменить лимит выгрузки"
 qst_lbl_edit_limit = "Загружать данные по … строк"
 qst_inp_ok = "Применить"
 qst_inp_cancel = "Отмена"
+
+qst_tab_raw_run = "Исполнить"
+qst_tab_raw_col_error = "Произошла ошибка"
+qst_tab_raw_col_result = "Запрос успешно исполнен"
+qst_tab_raw_matched_rows = "Изменено строк: {rows}"
 # endregion

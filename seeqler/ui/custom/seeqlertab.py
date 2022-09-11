@@ -96,14 +96,12 @@ class PagedTable(widget.QWidget):
         super().__init__(parent, *args, **kwargs)
         self.lang = Language()
 
-        self.columns = [x["name"] for x in columns]
         self.default_columns = [x["name"] for x in columns]
         self.offset = offset
         self.limit = limit
 
         self.table = widget.QTableWidget()
-        self.prepare_table()
-        self.table.setWordWrap(False)
+        self.update_cols([x["name"] for x in columns])
 
         self.bottom_layout = widget.QHBoxLayout()
 
@@ -157,6 +155,9 @@ class PagedTable(widget.QWidget):
         self.table.setRowCount(0)
         self.table.setRowCount(DEFAULT_ROW_COUNT)
         self.table.resizeColumnsToContents()
+        self.table.horizontalHeader().setStretchLastSection(False)
+        self.table.verticalHeader().setStretchLastSection(False)
+        self.table.setWordWrap(False)
 
     def update_cols(self, columns: list[str]):
         self.columns = columns
@@ -189,7 +190,7 @@ class PagedTable(widget.QWidget):
             self.limit = value
             self.onRequestedUpdate.emit()
 
-    def fillup_table(self, data: dict[str, list[Any]]):
+    def fillup_table(self, data: dict[str, int | list[Any]]):
         contents = data["contents"]
         row_number = data["rows"]
         table_rows = len(contents)
@@ -212,6 +213,9 @@ class PagedTable(widget.QWidget):
 
         if row_number == 0:
             self.statusbar.setText(f"0 {self.lang.qst_statusbar_of} 0")
+
+    def focus(self):
+        self.table.setFocus()
 
 
 class PagedTableWithMeta(PagedTable):
@@ -261,6 +265,56 @@ class PagedTableWithMeta(PagedTable):
         self.edit_config.setHidden(show_meta)
 
 
+class PagedTableWithEditor(PagedTable):
+    def __init__(self, parent, offset, limit, columns, *args, **kwargs):
+        super().__init__(parent, offset, limit, columns, *args, **kwargs)
+
+        self.textarea = widget.QTextEdit(self)
+        self.general_layout.insertWidget(0, self.textarea)
+
+        self.label_result = widget.QLabel(self)
+        self.label_result.hide()
+        self.general_layout.insertWidget(2, self.label_result)
+
+        self.run = widget.QPushButton(self.lang.qst_tab_raw_run)
+        self.run.setSizePolicy(retain_place)
+        self.run.clicked.connect(self.execute)
+        self.bottom_layout.addWidget(self.run)
+
+    def update_cols(self, columns: list[str]):
+        self.default_columns = columns
+        super().update_cols(columns)
+
+    def execute(self):
+        self.label_result.hide()
+        self.table.show()
+        self.prepare_table()
+        self.onRequestedUpdate.emit()
+
+    def fillup_table(self, data: tuple[dict[str, int | list[Any]], list[str]]):
+        data, columns = data
+
+        if isinstance(columns, str):
+            self.table.hide()
+            self.label_result.show()
+            text = str(data)
+            if columns == "error":
+                text = f"{self.lang.qst_tab_raw_col_error}\n\n{data}"
+            if columns == "norows":
+                text = f"{self.lang.qst_tab_raw_col_result}\n\n{self.lang.qst_tab_raw_matched_rows.format(rows=data)}"
+            self.label_result.setText(text)
+            return
+
+        table_rows = len(data)
+        data = data[self.offset : self.offset + self.limit]
+        self.update_cols([x for x in columns])
+        super().fillup_table({"contents": data, "rows": table_rows})
+
+    def focus(self):
+        self.textarea.focusInEvent(gui.QFocusEvent(core.QEvent.Type.FocusIn))
+        self.textarea.setFocus()
+
+
 class SeeqlerTab(widget.QWidget):
     def __init__(
         self, parent: "SchemaWindow", table_name: str, columns: list[dict] = None, raw: bool = False, *args, **kwargs
@@ -273,22 +327,26 @@ class SeeqlerTab(widget.QWidget):
 
         self.general_layout = widget.QVBoxLayout()
 
-        if not raw:
-            self.init_ui_normal(columns)
+        getattr(self, f"init_ui_{'raw' if self.raw else 'normal'}")(columns)
 
         self.setLayout(self.general_layout)
 
-    def init_ui_raw(self):
-        ...
+    def init_ui_raw(self, _):
+        self.paged_table = PagedTableWithEditor(self, 0, self.settings.rows_per_page, [])
+        self.paged_table.onRequestedUpdate.connect(self.load_table_contents)
+        self.general_layout.addWidget(self.paged_table)
 
     def init_ui_normal(self, columns):
         self.paged_table = PagedTableWithMeta(self, 0, self.settings.rows_per_page, columns)
         self.paged_table.onRequestedUpdate.connect(self.load_table_contents)
         self.general_layout.addWidget(self.paged_table)
 
+    def focus(self):
+        self.paged_table.focus()
+
     def load_table_contents(self):
         if self.raw:
-            ...
+            self.daddy.sql_run_raw_sql(self.table_name, self.paged_table.textarea.toPlainText())
         else:
             self.daddy.sql_get_table_contents(
                 self.table_name, self.paged_table.offset, self.paged_table.limit, self.paged_table.get_sql_select()

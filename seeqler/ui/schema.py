@@ -2,6 +2,8 @@ from typing import TYPE_CHECKING, Callable, Iterable, Any
 
 from .custom import SeeqlerTab
 from .utils import clear_layout
+from ..common.language import Language
+from ..settings import Settings
 from ..sql.interface import Interface
 
 from inspect import signature
@@ -81,6 +83,7 @@ class Retriever(core.QObject):
 class SchemaWindow(widget.QWidget):
     _state = ConnStates.DISCONNECTED
     _query, _executing_query = [], False
+    _raw_sql_counter = -1
     to_clean = []
 
     # region initial
@@ -98,20 +101,26 @@ class SchemaWindow(widget.QWidget):
         else:
             self.setWindowTitle(title)
 
+    @property
+    def raw_sql(self) -> int:
+        self._raw_sql_counter += 1
+        return self._raw_sql_counter
+
     def _get_loader(self) -> widget.QWidget:
         loader = widget.QLabel("...")  # TODO: replace with loading gif
         loader.setAlignment(core.Qt.AlignmentFlag.AlignCenter)
         return loader
 
-    def __init__(self, main_window, settings):
+    def __init__(self, main_window):
         super().__init__()
 
         self.setObjectName("SchemaWindow")
         self.main_window = main_window
-        self.settings = settings
+        self.settings = Settings()
+        self.lang = Language()
         self.set_defaults()
 
-        self.resize(core.QSize(int(settings.screen_width * 0.65), int(settings.screen_height * 0.65)))
+        self.resize(core.QSize(int(self.settings.screen_width * 0.65), int(self.settings.screen_height * 0.65)))
         layout = widget.QHBoxLayout()
         layout.addWidget(self._get_loader())
         self.setLayout(layout)
@@ -183,7 +192,7 @@ class SchemaWindow(widget.QWidget):
         self.widget_tab_holder.setTabsClosable(True)
         self.widget_tab_holder.tabCloseRequested.connect(self.tab_close)
 
-        self.widget_tab_holder.addTab(self.create_tab(default=True), self.settings.lang.sw_widget_tab_holder_empty)
+        self.widget_tab_holder.addTab(self.create_tab(default=True), self.lang.sw_widget_tab_holder_empty)
         self.widget_tab_holder.tabBar().setTabButton(0, BTN_AT_RIGHT, None)
         self.widget_tabs: dict[str, SeeqlerTab] = dict()
 
@@ -213,11 +222,29 @@ class SchemaWindow(widget.QWidget):
         layout.setSpacing(0)
         layout.setContentsMargins(0, 0, 0, 0)
 
+        # region top toolbar
+        self.toolbar_wrapper = widget.QFrame()
+        self.toolbar_wrapper.setFrameShape(widget.QFrame.Shape.StyledPanel)
+        sql_raw = widget.QToolButton(self.toolbar_wrapper)
+        sql_raw.setIcon(gui.QIcon(str(self.settings.resources_path / "icons" / "raw_sql.png")))
+        sql_raw.clicked.connect(
+            lambda: self.create_tab(f"__sql_raw_{self.raw_sql}", raw=True, title=self.lang.sw_widget_tab_holder_raw)
+        )
+        self.toolbar_wrapper.setMaximumHeight(22)
+        self.toolbar_wrapper.setMinimumHeight(22)
+        # endregion
+
+        general_layout = widget.QVBoxLayout()
+        general_layout.addWidget(self.toolbar_wrapper)
+        general_layout.addLayout(layout)
+        general_layout.setSpacing(0)
+        general_layout.setContentsMargins(0, 0, 0, 0)
+
         # deleting old layout
         clear_layout(self.layout())
 
         # setting new
-        self.setLayout(layout)
+        self.setLayout(general_layout)
 
     # region Events
 
@@ -247,11 +274,22 @@ class SchemaWindow(widget.QWidget):
 
     # region Tab GUI
 
-    def create_tab(self, table_name: str = None, columns: list[dict] = None, default=False):
-        if default or columns is None or table_name is None:
+    def create_tab(
+        self, table_name: str = None, columns: list[dict] = None, *, raw=False, default=False, title: str = None
+    ):
+        if default or columns is None and not raw or table_name is None:
             return self.get_default_tab_widget()
 
-        tab = SeeqlerTab(self, table_name, columns)
+        tab = SeeqlerTab(self, table_name, columns, raw=raw)
+
+        if not getattr(self, "widget_tabs", None):
+            self.widget_tab_holder.removeTab(0)
+            self.widget_tabs: dict[str, SeeqlerTab] = dict()
+
+        self.widget_tabs[table_name] = tab
+        self.widget_tab_holder.addTab(tab, title if title else table_name)
+        self.widget_tab_holder.setCurrentWidget(tab)
+        tab.focus()
         return tab
 
     def fillup_table(self, table_name: str, data: list[list[Any]]):
@@ -266,8 +304,8 @@ class SchemaWindow(widget.QWidget):
         return tab
 
     def tab_close(self, idx: int):
-        tab = self.widget_tab_holder.tabBar().tabText(idx)
-        del self.widget_tabs[tab]
+        tab: SeeqlerTab = self.widget_tab_holder.widget(idx)
+        del self.widget_tabs[tab.table_name]
 
         self.widget_tab_holder.removeTab(idx)
 
@@ -405,7 +443,9 @@ class SchemaWindow(widget.QWidget):
     # -----
 
     def sql_get_schema_names(self):
-        self.run_parallel_task(method=self.interface.get_schema_names, at_end=self.sql_get_schema_names_after)
+        self.run_parallel_task(
+            method=self.interface.inspector.get_schema_names, at_end=self.sql_get_schema_names_after
+        )
 
     @core.pyqtSlot(object)
     def sql_get_schema_names_after(self, data: list):
@@ -421,19 +461,33 @@ class SchemaWindow(widget.QWidget):
 
     def sql_get_tables_from_schema(self, name):
         self.run_parallel_task(
-            method=self.interface.get_table_list, method_args=(name,), at_end=self.sql_get_tables_from_schema_after
+            method=self.interface.inspector.get_table_names,
+            method_args=(name,),
+            at_end=self.sql_get_tables_from_schema_after,
         )
 
     @core.pyqtSlot(object)
     def sql_get_tables_from_schema_after(self, data: list):
-        self.result_table_names = data
+        self.result_table_names = sorted(data)
         self.widget_table_list.addItems(data)
 
     # -----
 
     def sql_get_table_meta(self, name):
+        def method(table, schema=None):
+            cols = self.interface.inspector.get_columns(table, schema=schema)
+            fkeys = {
+                fk["constrained_columns"][0]: "{referred_schema}.{referred_table}({referred_columns[0]})".format(**fk)
+                for fk in self.interface.inspector.get_foreign_keys(table, schema=schema)
+            }
+
+            for col in cols:
+                col["fkey"] = fkeys.get(col["name"])
+            return cols
+
         self.run_parallel_task(
-            method=lambda: self.interface.get_table_columns(name, schema=self.params_get_schema()),
+            method=method,
+            method_args=(name, self.params_get_schema()),
             at_end=self.sql_get_table_meta_after,
             extra_data={"name": name},
         )
@@ -442,30 +496,34 @@ class SchemaWindow(widget.QWidget):
     def sql_get_table_meta_after(self, data: dict):
         table = data.get("name")
         columns = data.get("data")
-
-        if not getattr(self, "widget_tabs", None):
-            self.widget_tab_holder.removeTab(0)
-            self.widget_tabs: dict[str, SeeqlerTab] = dict()
-
         tab = self.create_tab(table, columns)
-        self.widget_tabs[table] = tab
-        self.widget_tab_holder.addTab(tab, table)
-        self.widget_tab_holder.setCurrentWidget(tab)
-
         tab.load_table_contents()
 
     # -----
 
     def sql_get_table_contents(self, name, offset: int = 0, limit: int = 100, select: str = "*"):
+        def get_table_data(table: str, limit_: int, offset_: int, select_: str):
+            data, _ = self.interface.select(what=select_, from_=table, limit=limit_, offset=offset_)
+            (rows,) = self.interface.select(what="count(*) ", from_=table)[0][0]
+            return {"contents": data, "rows": rows}
+
         self.run_parallel_task(
-            method=self.interface.get_table_data,
-            method_kwargs={"table": name, "offset": offset, "limit": limit, "select": select},
-            at_end=self.sql_get_table_contents_after,
+            method=get_table_data,
+            method_kwargs={"table": name, "offset_": offset, "limit_": limit, "select_": select},
+            at_end=self.sql_filling_table,
             extra_data={"name": name},
         )
 
+    def sql_run_raw_sql(self, tab_name: str, request: str):
+        self.run_parallel_task(
+            self.interface.raw,
+            method_args=(request,),
+            at_end=self.sql_filling_table,
+            extra_data={"name": tab_name},
+        )
+
     @core.pyqtSlot(object)
-    def sql_get_table_contents_after(self, data: dict):
+    def sql_filling_table(self, data: dict):
         table_name = data.get("name")
         contents = data.get("data")
 

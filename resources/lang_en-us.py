@@ -47,6 +47,7 @@ sw_btn_schema_tab = "Show schema"
 
 sw_widget_filter_placeholder = "Filter items…"
 sw_widget_tab_holder_empty = "Empty"
+sw_widget_tab_holder_raw = "SQL"
 # endregion
 
 # region ui/custom/seeqlertab.py
@@ -66,4 +67,9 @@ qst_inp_edit_limit = "Change selection limit"
 qst_lbl_edit_limit = "Load data from table by … rows"
 qst_inp_ok = "Apply"
 qst_inp_cancel = "Cancel"
+
+qst_tab_raw_run = "Execute"
+qst_tab_raw_col_error = "An error occured"
+qst_tab_raw_col_result = "Query successfully executed"
+qst_tab_raw_matched_rows = "Matched rows: {rows}"
 # endregion

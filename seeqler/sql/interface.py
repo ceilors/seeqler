@@ -78,29 +78,3 @@ class Interface:
     @ensure_connected
     def disconnect(self):
         self._impl.disconnect()
-
-    @ensure_connected
-    def get_schema_names(self) -> list:
-        return self.inspector.get_schema_names()
-
-    @ensure_connected
-    def get_table_list(self, schema: str) -> list:
-        return sorted(self.inspector.get_table_names(schema=schema))
-
-    @ensure_connected
-    def get_table_columns(self, table: str, schema: str | None = None) -> list[dict]:
-        cols = self.inspector.get_columns(table, schema=schema)
-        fkeys = {
-            fkey["constrained_columns"][0]: "{referred_schema}.{referred_table}({referred_columns[0]})".format(**fkey)
-            for fkey in self.inspector.get_foreign_keys(table, schema=schema)
-        }
-
-        for col in cols:
-            col["fkey"] = fkeys.get(col["name"])
-        return cols
-
-    @ensure_connected
-    def get_table_data(self, table: str, limit: int, offset: int, select: str):
-        data = self.select(what=select, from_=table, limit=limit, offset=offset)
-        rows: int = self.select(what="count(*) ", from_=table)[0][0]
-        return {"contents": data, "rows": rows}

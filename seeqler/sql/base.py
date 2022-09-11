@@ -1,5 +1,7 @@
 from typing import Optional, Type, TYPE_CHECKING
 
+import sqlalchemy.exc
+
 if TYPE_CHECKING:
     from sqlalchemy.engine import Engine, Inspector, CursorResult
 
@@ -53,10 +55,15 @@ class BaseSQL(metaclass=BaseSQLMeta):
     engine: Optional["Engine"] = None
     inspector: Optional["Inspector"] = None
 
-    def raw(self, request, *args, **kwargs) -> list:
-        with self.engine.connect() as conn:
-            cursor: "CursorResult" = conn.execute(request, *args, **kwargs)
-            return cursor.all()
+    def raw(self, request, *args, **kwargs) -> tuple[list | str | int, list | str]:
+        try:
+            with self.engine.connect() as conn:
+                cursor: "CursorResult" = conn.execute(request, *args, **kwargs)
+                if cursor.returns_rows:
+                    return cursor.all(), cursor.keys()
+                return cursor.rowcount, "norows"
+        except sqlalchemy.exc.OperationalError as e:
+            return str(e), "error"
 
     @staticmethod
     def _stringify(value: str | int | list[str] | None, keyword: str = "", separator: str = ", ") -> str:
@@ -80,7 +87,7 @@ class BaseSQL(metaclass=BaseSQLMeta):
         order: str | list[str] | None = None,
         limit: int | str | None = None,
         offset: int | str | None = None,
-    ):
+    ) -> tuple[list, list]:
         request = "select "
         if distinct:
             request += "distinct "

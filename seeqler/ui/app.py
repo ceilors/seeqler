@@ -13,7 +13,7 @@ class MainWindow(widget.QMainWindow):
 
         self.windows = SimpleNamespace()
         self.windows.connection_manager = ConnectionListWindow(self, settings)
-        self.windows.schema_window = SchemaWindow(self, settings)
+        self.windows.schema_window = SchemaWindow(self)
 
         if settings.connection:
             self.windows.schema_window.set_up(settings.connection)

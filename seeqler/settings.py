@@ -16,3 +16,5 @@ class Settings(metaclass=SingletonMeta):
     resources_path: "Path"
     rows_per_page: int = 100
     connection: Optional["Connection"] = None
+    screen_width: int = 1024
+    screen_height: int = 768
