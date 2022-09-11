@@ -10,6 +10,7 @@ class TextHightlight(gui.QSyntaxHighlighter):
         keywordfmt = gui.QTextCharFormat()
         keywordfmt.setForeground(gui.QColor("darkMagenta"))
 
+        # fmt: off
         keywords = [
             "abort", "action", "add", "after", "all", "alter", "always", "analyze", "and", "as", "asc", "attach",
             "autoincrement", "before", "begin", "between", "by", "cascade", "case", "cast", "check", "collate",
@@ -27,12 +28,13 @@ class TextHightlight(gui.QSyntaxHighlighter):
             "unique", "update", "using", "vacuum", "values", "view", "virtual", "when", "where", "window", "with",
             "without"
         ]
+        # fmt: on
 
         self.highlightingRules = [(f"\\b{key}\\b", keywordfmt) for key in keywords]
 
     def highlightBlock(self, text):
         for pattern, fmt in self.highlightingRules:
-            regex = core.QRegularExpression(pattern)
+            regex = core.QRegularExpression(pattern, core.QRegularExpression.PatternOption.CaseInsensitiveOption)
             i = regex.globalMatch(text)
             while i.hasNext():
                 match = i.next()
