@@ -2,6 +2,7 @@ from typing import TYPE_CHECKING, Any
 
 from PyQt6 import QtCore as core, QtGui as gui, QtWidgets as widget
 
+from seeqler.ui.custom.texthighlight import TextHightlight
 from seeqler.common.language import Language
 from seeqler.settings import Settings
 
@@ -270,6 +271,7 @@ class PagedTableWithEditor(PagedTable):
         super().__init__(parent, offset, limit, columns, *args, **kwargs)
 
         self.textarea = widget.QTextEdit(self)
+        self.highlighter = TextHightlight(self.textarea.document())
         self.general_layout.insertWidget(0, self.textarea)
 
         self.label_result = widget.QLabel(self)
