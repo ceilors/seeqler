@@ -25,10 +25,10 @@ class MainWindow(widget.QMainWindow):
 def get_app(settings):
     app = widget.QApplication([])
 
-    # using FiraMono for whole app
-    font_id = QFontDatabase.addApplicationFont(str(settings.resources_path / "FiraMono-Regular.ttf"))
-    if font_id >= 0:
-        font_name = QFontDatabase.applicationFontFamilies(font_id)[0]
+    # load all needed fonts
+    for font in settings.font_list:
+        QFontDatabase.addApplicationFont(str(settings.resources_path / font))
+
     with open(settings.resources_path / "app_style.qss", "r") as qss:
         app.setStyleSheet(qss.read())
 

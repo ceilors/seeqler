@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Optional, List
 
 from dataclasses import dataclass
 
@@ -18,3 +18,4 @@ class Settings(metaclass=SingletonMeta):
     connection: Optional["Connection"] = None
     screen_width: int = 1024
     screen_height: int = 768
+    font_list: List[int] = ("FiraMono-Regular.ttf", "FiraMono-Bold.ttf")

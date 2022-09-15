@@ -6,9 +6,9 @@ class TextHightlight(gui.QSyntaxHighlighter):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # TODO: setup bold font
         keywordfmt = gui.QTextCharFormat()
         keywordfmt.setForeground(gui.QColor("darkMagenta"))
+        keywordfmt.setFontWeight(gui.QFont.Weight.Bold)
 
         # fmt: off
         keywords = [
