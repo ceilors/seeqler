@@ -1,13 +1,14 @@
-from typing import TYPE_CHECKING, Optional, List
-
 from dataclasses import dataclass
+from typing import TYPE_CHECKING, List, Optional
 
 from .common.types import SingletonMeta
 
 if TYPE_CHECKING:
-    from .common.connection_manager import Connection
-    from seeqler.common.language import Language
     from pathlib import Path
+
+    from seeqler.common.language import Language
+
+    from .common.connection_manager import Connection
 
 
 @dataclass

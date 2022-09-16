@@ -1,4 +1,6 @@
-from PyQt6 import QtCore as core, QtGui as gui, QtWidgets as widget
+from PyQt6 import QtCore as core
+from PyQt6 import QtGui as gui
+from PyQt6 import QtWidgets as widget
 
 
 # TODO: complex rules

@@ -1,9 +1,9 @@
-from typing import Optional, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional, Type
 
 import sqlalchemy.exc
 
 if TYPE_CHECKING:
-    from sqlalchemy.engine import Engine, Inspector, CursorResult
+    from sqlalchemy.engine import CursorResult, Engine, Inspector
 
 
 __all__ = ("BaseSQL", "BaseNoSQL")

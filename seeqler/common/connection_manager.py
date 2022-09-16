@@ -1,6 +1,6 @@
 import json
 import uuid as uuid_lib
-from dataclasses import dataclass, asdict, field
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
 from .types import SingletonMeta

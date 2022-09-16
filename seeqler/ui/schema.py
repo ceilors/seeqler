@@ -1,13 +1,15 @@
-from typing import TYPE_CHECKING, Callable, Iterable, Any
+from inspect import signature
+from typing import TYPE_CHECKING, Any, Callable, Iterable
 
-from .custom import SeeqlerTab
-from .utils import clear_layout
+from PyQt6 import QtCore as core
+from PyQt6 import QtGui as gui
+from PyQt6 import QtWidgets as widget
+
 from ..common.language import Language
 from ..settings import Settings
 from ..sql.interface import Interface
-
-from inspect import signature
-from PyQt6 import QtCore as core, QtGui as gui, QtWidgets as widget
+from .custom import SeeqlerTab
+from .utils import clear_layout
 
 if TYPE_CHECKING:
     from ..common.connection_manager import Connection
@@ -443,9 +445,7 @@ class SchemaWindow(widget.QWidget):
     # -----
 
     def sql_get_schema_names(self):
-        self.run_parallel_task(
-            method=self.interface.inspector.get_schema_names, at_end=self.sql_get_schema_names_after
-        )
+        self.run_parallel_task(method=self.interface.inspector.get_schema_names, at_end=self.sql_get_schema_names_after)
 
     @core.pyqtSlot(object)
     def sql_get_schema_names_after(self, data: list):

@@ -1,7 +1,6 @@
-from ..base import BaseSQL
-
 import sqlalchemy as sa
 
+from ..base import BaseSQL
 
 __all__ = ("SQLite",)
 

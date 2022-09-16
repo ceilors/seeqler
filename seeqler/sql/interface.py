@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING, Type
 from .sqlite import SQLite
 
 if TYPE_CHECKING:
-    from .base import BaseSQL, BaseNoSQL
     from ..common.connection_manager import Connection
+    from .base import BaseNoSQL, BaseSQL
 
 
 def driver_factory(dbms: str) -> Type["BaseSQL"] | Type["BaseNoSQL"]:

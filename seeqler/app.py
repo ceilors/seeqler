@@ -1,10 +1,9 @@
+from pathlib import Path
+
 from .common.connection_manager import Connection, ConnectionManager
 from .common.language import Language
 from .settings import Settings
 from .ui.app import get_app
-
-from pathlib import Path
-
 
 RESOURCES_PATH = Path(__file__).parents[1] / "resources"
 LANGUAGE = "RU-RU"  # TODO: replace with preferences

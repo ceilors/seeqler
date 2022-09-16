@@ -1,10 +1,10 @@
-from PyQt6.QtGui import QFontDatabase
+from types import SimpleNamespace
+
 import PyQt6.QtWidgets as widget
+from PyQt6.QtGui import QFontDatabase
 
 from .connection_list import ConnectionListWindow
 from .schema import SchemaWindow
-
-from types import SimpleNamespace
 
 
 class MainWindow(widget.QMainWindow):

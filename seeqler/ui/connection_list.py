@@ -2,8 +2,8 @@ import PyQt6.QtCore as core
 import PyQt6.QtGui as gui
 import PyQt6.QtWidgets as widget
 
-from .custom import ErrorLineEdit
 from ..common.connection_manager import Connection, ConnectionManager
+from .custom import ErrorLineEdit
 
 
 class ConnectionItem(widget.QWidget):
@@ -39,7 +39,6 @@ class ConnectionItem(widget.QWidget):
         layout.setStretch(0, 3)
 
         self.setLayout(layout)
-
 
     def _get_connection(self):
         return ConnectionManager().get(uuid=self.uuid)

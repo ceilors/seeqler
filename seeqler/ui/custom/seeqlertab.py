@@ -1,10 +1,12 @@
 from typing import TYPE_CHECKING, Any
 
-from PyQt6 import QtCore as core, QtGui as gui, QtWidgets as widget
+from PyQt6 import QtCore as core
+from PyQt6 import QtGui as gui
+from PyQt6 import QtWidgets as widget
 
-from seeqler.ui.custom.texthighlight import TextHightlight
 from seeqler.common.language import Language
 from seeqler.settings import Settings
+from seeqler.ui.custom.texthighlight import TextHightlight
 
 from .checklist import CheckList
 from .utils import retain_place

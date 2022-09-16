@@ -1,6 +1,6 @@
-from .types import SingletonMeta
-
 import importlib
+
+from .types import SingletonMeta
 
 
 class Language(metaclass=SingletonMeta):
