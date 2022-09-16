@@ -10,7 +10,9 @@ pyqt6 = "*"
 
 [dev-packages]
 black = "*"
-flake8 = "*"
+isort = "*"
+mypy = "*"
+pylint = "*"
 ipython = "*"
 
 [requires]
